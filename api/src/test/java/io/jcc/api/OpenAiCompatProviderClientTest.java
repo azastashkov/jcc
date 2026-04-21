@@ -188,6 +188,97 @@ class OpenAiCompatProviderClientTest {
     }
 
     @Test
+    void translatesHermesStyleTextualToolCallIntoToolUseEvent() {
+        responseBody = """
+            data: {"id":"chatcmpl-1","choices":[{"delta":{"role":"assistant","content":"<function"},"index":0,"finish_reason":null}]}
+
+            data: {"id":"chatcmpl-1","choices":[{"delta":{"content":"=read_file>\\n<parameter=path>\\nPermissionMode.java\\n</parameter>\\n</function>\\n</tool_call>"},"index":0,"finish_reason":null}]}
+
+            data: {"id":"chatcmpl-1","choices":[{"delta":{},"index":0,"finish_reason":"stop"}],"usage":{"completion_tokens":20}}
+
+            data: [DONE]
+
+            """;
+
+        MessageRequest req = MessageRequest.builder()
+            .model("qwen")
+            .maxTokens(200)
+            .messages(List.of(InputMessage.userText("show PermissionMode.java")))
+            .build();
+
+        List<StreamEvent> events = new ArrayList<>();
+        client().stream(req, events::add);
+
+        boolean anyTextDelta = events.stream()
+            .anyMatch(e -> e instanceof StreamEvent.ContentBlockDeltaEvent cbd
+                && cbd.delta() instanceof ContentBlockDelta.TextDelta);
+        assertThat(anyTextDelta)
+            .as("the Hermes XML should not leak through as text deltas")
+            .isFalse();
+
+        StreamEvent.ContentBlockStart toolStart = (StreamEvent.ContentBlockStart) events.stream()
+            .filter(e -> e instanceof StreamEvent.ContentBlockStart cbs
+                && cbs.contentBlock() instanceof ContentBlock.ToolUse)
+            .findFirst().orElseThrow();
+        ContentBlock.ToolUse use = (ContentBlock.ToolUse) toolStart.contentBlock();
+        assertThat(use.name()).isEqualTo("read_file");
+        assertThat(use.id()).isNotBlank();
+
+        String accumulatedArgs = events.stream()
+            .filter(e -> e instanceof StreamEvent.ContentBlockDeltaEvent cbd
+                && cbd.delta() instanceof ContentBlockDelta.InputJsonDelta)
+            .map(e -> ((ContentBlockDelta.InputJsonDelta) ((StreamEvent.ContentBlockDeltaEvent) e).delta()).partialJson())
+            .reduce("", String::concat);
+        JsonNode args;
+        try {
+            args = JsonMapper.shared().readTree(accumulatedArgs);
+        } catch (IOException e) {
+            throw new AssertionError("arguments not valid JSON: " + accumulatedArgs, e);
+        }
+        assertThat(args.path("path").asText()).isEqualTo("PermissionMode.java");
+
+        StreamEvent.MessageDeltaEvent md = (StreamEvent.MessageDeltaEvent) events.stream()
+            .filter(e -> e instanceof StreamEvent.MessageDeltaEvent)
+            .findFirst().orElseThrow();
+        assertThat(md.delta().stopReason()).isEqualTo("tool_use");
+    }
+
+    @Test
+    void passesThroughPlainTextWhenNoHermesMarkers() {
+        responseBody = """
+            data: {"id":"chatcmpl-1","choices":[{"delta":{"role":"assistant","content":"Hello "},"index":0,"finish_reason":null}]}
+
+            data: {"id":"chatcmpl-1","choices":[{"delta":{"content":"world."},"index":0,"finish_reason":null}]}
+
+            data: {"id":"chatcmpl-1","choices":[{"delta":{},"index":0,"finish_reason":"stop"}]}
+
+            data: [DONE]
+
+            """;
+
+        MessageRequest req = MessageRequest.builder()
+            .model("qwen")
+            .maxTokens(20)
+            .messages(List.of(InputMessage.userText("greet")))
+            .build();
+
+        List<StreamEvent> events = new ArrayList<>();
+        client().stream(req, events::add);
+
+        String collected = events.stream()
+            .filter(e -> e instanceof StreamEvent.ContentBlockDeltaEvent cbd
+                && cbd.delta() instanceof ContentBlockDelta.TextDelta)
+            .map(e -> ((ContentBlockDelta.TextDelta) ((StreamEvent.ContentBlockDeltaEvent) e).delta()).text())
+            .reduce("", String::concat);
+        assertThat(collected).isEqualTo("Hello world.");
+
+        boolean anyToolUse = events.stream()
+            .anyMatch(e -> e instanceof StreamEvent.ContentBlockStart cbs
+                && cbs.contentBlock() instanceof ContentBlock.ToolUse);
+        assertThat(anyToolUse).isFalse();
+    }
+
+    @Test
     void mapsAssistantToolUseAndToolResultHistoryToOpenAiMessages() throws Exception {
         ObjectNode toolInput = JsonMapper.shared().createObjectNode();
         toolInput.put("path", "./README.md");

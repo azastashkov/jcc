@@ -212,6 +212,9 @@ public final class OpenAiCompatProviderClient implements ProviderClient {
     }
 
     static final class OpenAiStreamTranslator {
+        private static final String HERMES_FN_PREFIX = "<function=";
+        private static final String HERMES_WRAPPER_PREFIX = "<tool_call>";
+
         private final ObjectMapper mapper;
         private final StreamEventHandler handler;
         private final String model;
@@ -222,6 +225,10 @@ public final class OpenAiCompatProviderClient implements ProviderClient {
         private final Map<Integer, PendingToolCall> pendingToolCalls = new LinkedHashMap<>();
         private String finishReason;
         private int outputTokens;
+
+        private final StringBuilder pendingText = new StringBuilder();
+        private boolean textDecisionMade;
+        private boolean hermesMode;
 
         OpenAiStreamTranslator(ObjectMapper mapper, StreamEventHandler handler, String model) {
             this.mapper = mapper;
@@ -285,14 +292,7 @@ public final class OpenAiCompatProviderClient implements ProviderClient {
 
                 JsonNode contentNode = delta.path("content");
                 if (contentNode.isTextual() && !contentNode.asText().isEmpty()) {
-                    if (!textBlockStarted) {
-                        handler.onEvent(new StreamEvent.ContentBlockStart(
-                            nextContentIndex, new ContentBlock.Text("")));
-                        textBlockStarted = true;
-                    }
-                    handler.onEvent(new StreamEvent.ContentBlockDeltaEvent(
-                        nextContentIndex,
-                        new ContentBlockDelta.TextDelta(contentNode.asText())));
+                    onContentDelta(contentNode.asText());
                 }
 
                 JsonNode toolCalls = delta.path("tool_calls");
@@ -321,13 +321,81 @@ public final class OpenAiCompatProviderClient implements ProviderClient {
             }
         }
 
+        private void onContentDelta(String chunk) {
+            pendingText.append(chunk);
+
+            if (!textDecisionMade) {
+                decidePendingText();
+                if (!textDecisionMade) return;
+            }
+            if (hermesMode) return;
+
+            if (!textBlockStarted) {
+                handler.onEvent(new StreamEvent.ContentBlockStart(
+                    nextContentIndex, new ContentBlock.Text("")));
+                textBlockStarted = true;
+            }
+            String toFlush = pendingText.toString();
+            pendingText.setLength(0);
+            handler.onEvent(new StreamEvent.ContentBlockDeltaEvent(
+                nextContentIndex,
+                new ContentBlockDelta.TextDelta(toFlush)));
+        }
+
+        private void decidePendingText() {
+            int i = 0;
+            while (i < pendingText.length() && Character.isWhitespace(pendingText.charAt(i))) i++;
+            if (i == pendingText.length()) return;
+            String trimmedHead = pendingText.substring(i);
+
+            if (startsWith(trimmedHead, HERMES_FN_PREFIX)
+                || startsWith(trimmedHead, HERMES_WRAPPER_PREFIX)) {
+                textDecisionMade = true;
+                hermesMode = true;
+                return;
+            }
+            if (isPrefixOf(trimmedHead, HERMES_FN_PREFIX)
+                || isPrefixOf(trimmedHead, HERMES_WRAPPER_PREFIX)) {
+                return;
+            }
+            textDecisionMade = true;
+            hermesMode = false;
+        }
+
+        private static boolean startsWith(String s, String target) {
+            return s.length() >= target.length() && s.regionMatches(0, target, 0, target.length());
+        }
+
+        private static boolean isPrefixOf(String partial, String full) {
+            return partial.length() < full.length()
+                && full.regionMatches(0, partial, 0, partial.length());
+        }
+
         private void finish() {
             if (!messageStarted) return;
+
+            if (hermesMode && pendingText.length() > 0) {
+                extractHermesToolCalls(pendingText.toString());
+                pendingText.setLength(0);
+            } else if (pendingText.length() > 0) {
+                if (!textBlockStarted) {
+                    handler.onEvent(new StreamEvent.ContentBlockStart(
+                        nextContentIndex, new ContentBlock.Text("")));
+                    textBlockStarted = true;
+                }
+                handler.onEvent(new StreamEvent.ContentBlockDeltaEvent(
+                    nextContentIndex,
+                    new ContentBlockDelta.TextDelta(pendingText.toString())));
+                pendingText.setLength(0);
+            }
+
             if (textBlockStarted) {
                 handler.onEvent(new StreamEvent.ContentBlockStop(nextContentIndex));
                 textBlockStarted = false;
                 nextContentIndex++;
             }
+
+            boolean hermesCalled = hermesMode && !pendingToolCalls.isEmpty();
 
             int counter = 0;
             for (PendingToolCall p : pendingToolCalls.values()) {
@@ -346,7 +414,9 @@ public final class OpenAiCompatProviderClient implements ProviderClient {
             }
             pendingToolCalls.clear();
 
-            String stop = finishReason == null ? "end_turn" : translateFinish(finishReason);
+            String stop = hermesCalled
+                ? "tool_use"
+                : (finishReason == null ? "end_turn" : translateFinish(finishReason));
             handler.onEvent(new StreamEvent.MessageDeltaEvent(
                 new StreamEvent.MessageDelta(stop, null),
                 new Usage(0, 0, 0, outputTokens)));
@@ -355,6 +425,50 @@ public final class OpenAiCompatProviderClient implements ProviderClient {
             finishReason = null;
             outputTokens = 0;
             nextContentIndex = 0;
+            textDecisionMade = false;
+            hermesMode = false;
+        }
+
+        private void extractHermesToolCalls(String text) {
+            java.util.regex.Matcher fn = java.util.regex.Pattern
+                .compile("<function=([^>\\s]+)>([\\s\\S]*?)</function>")
+                .matcher(text);
+            int counter = 0;
+            while (fn.find()) {
+                String name = fn.group(1);
+                String body = fn.group(2);
+                ObjectNode args = mapper.createObjectNode();
+                java.util.regex.Matcher params = java.util.regex.Pattern
+                    .compile("<parameter=([^>\\s]+)>([\\s\\S]*?)</parameter>")
+                    .matcher(body);
+                while (params.find()) {
+                    String key = params.group(1);
+                    String raw = params.group(2).strip();
+                    putHermesArg(args, key, raw);
+                }
+                PendingToolCall p = new PendingToolCall();
+                p.id = "call_hermes_" + counter++;
+                p.name = name;
+                try {
+                    p.arguments.append(mapper.writeValueAsString(args));
+                } catch (JsonProcessingException e) {
+                    throw new ApiException("Failed to serialize Hermes tool arguments", e);
+                }
+                pendingToolCalls.put(pendingToolCalls.size(), p);
+            }
+        }
+
+        private void putHermesArg(ObjectNode args, String key, String raw) {
+            try {
+                JsonNode parsed = mapper.readTree(raw);
+                if (parsed.isNumber() || parsed.isBoolean() || parsed.isObject() || parsed.isArray()) {
+                    args.set(key, parsed);
+                    return;
+                }
+            } catch (IOException ignored) {
+                // fall through to string
+            }
+            args.put(key, raw);
         }
 
         private static String translateFinish(String openAi) {
