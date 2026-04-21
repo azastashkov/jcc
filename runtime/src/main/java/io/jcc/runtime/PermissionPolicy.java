@@ -3,22 +3,14 @@ package io.jcc.runtime;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class PermissionPolicy {
+public record PermissionPolicy(PermissionMode activeMode, Map<String, PermissionMode> toolRequirements) {
 
-    private final PermissionMode activeMode;
-    private final Map<String, PermissionMode> toolRequirements;
+    public PermissionPolicy {
+        toolRequirements = Map.copyOf(toolRequirements);
+    }
 
     public PermissionPolicy(PermissionMode activeMode) {
         this(activeMode, Map.of());
-    }
-
-    public PermissionPolicy(PermissionMode activeMode, Map<String, PermissionMode> toolRequirements) {
-        this.activeMode = activeMode;
-        this.toolRequirements = Map.copyOf(toolRequirements);
-    }
-
-    public PermissionMode activeMode() {
-        return activeMode;
     }
 
     public PermissionPolicy withToolRequirement(String toolName, PermissionMode required) {
