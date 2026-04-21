@@ -2,6 +2,7 @@ package io.clawcode.cli;
 
 import io.clawcode.api.AnthropicProviderClient;
 import io.clawcode.api.InputMessage;
+import io.clawcode.api.OpenAiCompatProviderClient;
 import io.clawcode.api.ProviderClient;
 import io.clawcode.core.MessageRole;
 import io.clawcode.runtime.AssistantEventHandler;
@@ -21,6 +22,7 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 import java.io.PrintStream;
+import java.net.URI;
 import java.net.http.HttpClient;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -54,12 +56,28 @@ public final class PromptSubcommand implements Callable<Integer> {
 
     @Override
     public Integer call() {
-        String apiKey = System.getenv("ANTHROPIC_API_KEY");
-        if (apiKey == null || apiKey.isBlank()) {
-            System.err.println("ANTHROPIC_API_KEY environment variable is not set.");
+        ProviderClient client;
+        try {
+            client = selectProvider();
+        } catch (IllegalStateException e) {
+            System.err.println(e.getMessage());
             return 2;
         }
-        return runPrompt(new AnthropicProviderClient(apiKey), System.out, SessionStore.defaultStore());
+        return runPrompt(client, System.out, SessionStore.defaultStore());
+    }
+
+    private static ProviderClient selectProvider() {
+        String openAiBase = System.getenv("OPENAI_BASE_URL");
+        if (openAiBase != null && !openAiBase.isBlank()) {
+            String key = System.getenv("OPENAI_API_KEY");
+            return new OpenAiCompatProviderClient(key == null ? "" : key, URI.create(openAiBase));
+        }
+        String anthropic = System.getenv("ANTHROPIC_API_KEY");
+        if (anthropic == null || anthropic.isBlank()) {
+            throw new IllegalStateException(
+                "ANTHROPIC_API_KEY is not set (or set OPENAI_BASE_URL + OPENAI_API_KEY for an OpenAI-compatible endpoint).");
+        }
+        return new AnthropicProviderClient(anthropic);
     }
 
     int runPrompt(ProviderClient client, PrintStream out, SessionStore store) {
