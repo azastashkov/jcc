@@ -1,4 +1,4 @@
-rootProject.name = 'cc-java'
+rootProject.name = 'jcc'
 
 include 'core'
 include 'api'

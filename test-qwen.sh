@@ -1,13 +1,13 @@
 #!/bin/bash
-# cc-java → Ollama (Qwen3-Coder) smoke test.
+# jcc → Ollama (Qwen3-Coder) smoke test.
 #
 # Prereqs:
 #   - ollama serve is running
 #   - ollama pull qwen3-coder:30b-a3b-fp16 has completed
-#   - cc-java is built (./gradlew :cli:installDist)
+#   - jcc is built (./gradlew :cli:installDist)
 set -euo pipefail
 
-JCC=/Users/azastashkov/projects/github/cc-java/cli/build/install/jcc/bin/jcc
+JCC=/Users/azastashkov/projects/github/jcc/cli/build/install/jcc/bin/jcc
 MODEL="${MODEL:-qwen3-coder:30b-a3b-fp16}"
 
 export OPENAI_BASE_URL="http://localhost:11434/v1"
