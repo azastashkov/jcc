@@ -5,9 +5,11 @@ import io.clawcode.commands.builtin.ConfigCommand;
 import io.clawcode.commands.builtin.CostCommand;
 import io.clawcode.commands.builtin.ExitCommand;
 import io.clawcode.commands.builtin.HelpCommand;
+import io.clawcode.commands.builtin.McpCommand;
 import io.clawcode.commands.builtin.McpStubCommand;
 import io.clawcode.commands.builtin.SkillsStubCommand;
 import io.clawcode.commands.builtin.StatusCommand;
+import io.clawcode.runtime.mcp.McpServerManager;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -26,6 +28,10 @@ public final class SlashCommandRegistry {
     }
 
     public static SlashCommandRegistry defaults() {
+        return withMcp(() -> null);
+    }
+
+    public static SlashCommandRegistry withMcp(java.util.function.Supplier<McpServerManager> mcp) {
         HelpCommand help = new HelpCommand();
         SlashCommandRegistry registry = new SlashCommandRegistry(List.of(
             help,
@@ -33,7 +39,7 @@ public final class SlashCommandRegistry {
             new CostCommand(),
             new ClearCommand(),
             new ConfigCommand(),
-            new McpStubCommand(),
+            mcp == null ? new McpStubCommand() : new McpCommand(mcp),
             new SkillsStubCommand(),
             new ExitCommand()));
         help.bind(registry);
