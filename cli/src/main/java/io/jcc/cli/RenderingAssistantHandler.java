@@ -30,6 +30,11 @@ public final class RenderingAssistantHandler implements AssistantEventHandler {
     }
 
     @Override
+    public void onToolResult(String id, String name, String output, boolean isError) {
+        renderer.onEvent(new AssistantEvent.ToolResult(id, name, output, isError));
+    }
+
+    @Override
     public void onUsage(Usage usage) {
         runningUsage = runningUsage.plus(usage);
         renderer.onEvent(new AssistantEvent.UsageReport(runningUsage));

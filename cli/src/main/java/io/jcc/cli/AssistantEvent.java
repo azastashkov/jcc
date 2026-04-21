@@ -10,6 +10,7 @@ import io.jcc.core.Usage;
     @JsonSubTypes.Type(value = AssistantEvent.TextDelta.class, name = "text_delta"),
     @JsonSubTypes.Type(value = AssistantEvent.Thinking.class, name = "thinking"),
     @JsonSubTypes.Type(value = AssistantEvent.ToolUseRequested.class, name = "tool_use_requested"),
+    @JsonSubTypes.Type(value = AssistantEvent.ToolResult.class, name = "tool_result"),
     @JsonSubTypes.Type(value = AssistantEvent.UsageReport.class, name = "usage_report"),
     @JsonSubTypes.Type(value = AssistantEvent.TurnFinish.class, name = "turn_finish")
 })
@@ -23,6 +24,9 @@ public sealed interface AssistantEvent {
 
     @JsonTypeName("tool_use_requested")
     record ToolUseRequested(String id, String name, String inputJson) implements AssistantEvent {}
+
+    @JsonTypeName("tool_result")
+    record ToolResult(String id, String name, String output, boolean isError) implements AssistantEvent {}
 
     @JsonTypeName("usage_report")
     record UsageReport(Usage usage) implements AssistantEvent {}

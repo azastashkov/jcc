@@ -1,5 +1,6 @@
 package io.jcc.cli;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.jcc.commands.SlashCommandRegistry;
 import io.jcc.commands.SlashCommandResult;
 import io.jcc.commands.SlashContext;
@@ -101,6 +102,17 @@ public final class ReplSession {
                 @Override
                 public void onTextDelta(String text) {
                     renderer.onEvent(new AssistantEvent.TextDelta(text));
+                }
+
+                @Override
+                public void onToolUseEnd(String id, String name, JsonNode input) {
+                    renderer.onEvent(new AssistantEvent.ToolUseRequested(
+                        id, name, input == null ? "{}" : input.toString()));
+                }
+
+                @Override
+                public void onToolResult(String id, String name, String output, boolean isError) {
+                    renderer.onEvent(new AssistantEvent.ToolResult(id, name, output, isError));
                 }
 
                 @Override
