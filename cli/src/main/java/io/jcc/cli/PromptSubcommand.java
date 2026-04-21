@@ -101,7 +101,7 @@ public final class PromptSubcommand implements Callable<Integer> {
         RuntimeConfig config = new ConfigLoader().load(workingDir);
 
         String resolvedModel = ModelAliases.resolve(firstNonNull(model, config.model()));
-        int resolvedMaxTokens = firstNonNull(maxTokens, config.maxTokens(), 1024);
+        int resolvedMaxTokens = firstNonNull(maxTokens, config.maxTokens(), 8192);
 
         PermissionMode mode;
         try {

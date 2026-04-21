@@ -33,7 +33,7 @@ public record MessageRequest(
 
     public static final class Builder {
         private String model;
-        private int maxTokens = 1024;
+        private int maxTokens = 8192;
         private List<InputMessage> messages = List.of();
         private String system;
         private List<ToolDefinition> tools;

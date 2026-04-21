@@ -46,6 +46,32 @@ class TextRendererTest {
     }
 
     @Test
+    void nonEndTurnStopReasonIsVisible() {
+        ByteArrayOutputStream buf = new ByteArrayOutputStream();
+        try (TextRenderer r = new TextRenderer(new PrintStream(buf, true, StandardCharsets.UTF_8))) {
+            r.onEvent(new AssistantEvent.TextDelta("Now I'll write the test."));
+            r.onEvent(new AssistantEvent.UsageReport(new Usage(0, 0, 0, 1024)));
+            r.onEvent(new AssistantEvent.TurnFinish("max_tokens"));
+        }
+
+        String out = buf.toString(StandardCharsets.UTF_8);
+        assertThat(out).contains("max_tokens");
+    }
+
+    @Test
+    void endTurnStopReasonIsSilent() {
+        ByteArrayOutputStream buf = new ByteArrayOutputStream();
+        try (TextRenderer r = new TextRenderer(new PrintStream(buf, true, StandardCharsets.UTF_8))) {
+            r.onEvent(new AssistantEvent.TextDelta("All done."));
+            r.onEvent(new AssistantEvent.TurnFinish("end_turn"));
+        }
+
+        String out = buf.toString(StandardCharsets.UTF_8);
+        assertThat(out).doesNotContain("end_turn");
+        assertThat(out).doesNotContain("stop:");
+    }
+
+    @Test
     void textDeltaStillStreamsInline() {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         try (TextRenderer r = new TextRenderer(new PrintStream(buf, true, StandardCharsets.UTF_8))) {

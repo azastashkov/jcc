@@ -36,9 +36,13 @@ public final class TextRenderer implements StreamingRenderer {
                 out.flush();
             }
             case AssistantEvent.UsageReport report -> lastUsage = report.usage();
-            case AssistantEvent.TurnFinish ignored -> {
+            case AssistantEvent.TurnFinish finish -> {
                 if (sawText) {
                     out.println();
+                }
+                String reason = finish.stopReason();
+                if (reason != null && !reason.isBlank() && !"end_turn".equals(reason)) {
+                    out.printf("%n[stop: %s]%n", reason);
                 }
                 out.printf(
                     "%n[tokens in=%d out=%d cache_read=%d cache_write=%d]%n",

@@ -67,7 +67,7 @@ public final class RuntimeEnvironment {
         RuntimeConfig config = new ConfigLoader().load(workingDir);
 
         String resolvedModel = ModelAliases.resolve(firstNonNull(opts.model, config.model()));
-        int resolvedMaxTokens = firstNonNull(opts.maxTokens, config.maxTokens(), 1024);
+        int resolvedMaxTokens = firstNonNull(opts.maxTokens, config.maxTokens(), 8192);
 
         PermissionMode mode = PermissionMode.fromCliName(firstNonNull(
             opts.permissionMode,
