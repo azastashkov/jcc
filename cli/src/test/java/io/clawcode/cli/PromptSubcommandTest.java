@@ -4,9 +4,11 @@ import com.sun.net.httpserver.HttpServer;
 import io.clawcode.api.AnthropicProviderClient;
 import io.clawcode.api.ProviderClient;
 import io.clawcode.core.JsonMapper;
+import io.clawcode.runtime.SessionStore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -16,6 +18,7 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -71,20 +74,13 @@ class PromptSubcommandTest {
     }
 
     @Test
-    void textOutputStreamsDeltasAndUsage() {
-        ProviderClient client = new AnthropicProviderClient(
-            "test-key",
-            baseUri,
-            HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build(),
-            JsonMapper.shared());
-
-        PromptSubcommand cmd = new PromptSubcommand();
-        cmd.model = "opus";
-        cmd.outputFormat = "text";
+    void textOutputStreamsDeltasAndUsage(@TempDir Path sessionsDir) {
+        PromptSubcommand cmd = newCommand("text");
         cmd.prompt = "Say hello";
 
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        int exit = cmd.runPrompt(client, new PrintStream(buffer, true, StandardCharsets.UTF_8));
+        int exit = cmd.runPrompt(providerClient(), new PrintStream(buffer, true, StandardCharsets.UTF_8),
+            new SessionStore(sessionsDir));
 
         assertThat(exit).isZero();
         String out = buffer.toString(StandardCharsets.UTF_8);
@@ -93,20 +89,13 @@ class PromptSubcommandTest {
     }
 
     @Test
-    void jsonOutputEmitsNdjson() {
-        ProviderClient client = new AnthropicProviderClient(
-            "test-key",
-            baseUri,
-            HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build(),
-            JsonMapper.shared());
-
-        PromptSubcommand cmd = new PromptSubcommand();
-        cmd.model = "opus";
-        cmd.outputFormat = "json";
+    void jsonOutputEmitsNdjson(@TempDir Path sessionsDir) {
+        PromptSubcommand cmd = newCommand("json");
         cmd.prompt = "Say hello";
 
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        int exit = cmd.runPrompt(client, new PrintStream(buffer, true, StandardCharsets.UTF_8));
+        int exit = cmd.runPrompt(providerClient(), new PrintStream(buffer, true, StandardCharsets.UTF_8),
+            new SessionStore(sessionsDir));
 
         assertThat(exit).isZero();
         String out = buffer.toString(StandardCharsets.UTF_8);
@@ -115,5 +104,47 @@ class PromptSubcommandTest {
         assertThat(lines[0]).contains("\"text\":\"Hello\"");
         assertThat(out).contains("turn_finish");
         assertThat(out).contains("usage_report");
+    }
+
+    @Test
+    void resumeCarriesPriorHistory(@TempDir Path sessionsDir) {
+        SessionStore store = new SessionStore(sessionsDir);
+
+        PromptSubcommand first = newCommand("text");
+        first.prompt = "first message";
+        first.runPrompt(providerClient(), silent(), store);
+
+        Path firstSession = store.list().get(0);
+        long sizeAfterFirst = firstSession.toFile().length();
+        assertThat(sizeAfterFirst).isGreaterThan(0L);
+
+        PromptSubcommand second = newCommand("text");
+        second.prompt = "second message";
+        second.resume = firstSession.getFileName().toString();
+        second.runPrompt(providerClient(), silent(), store);
+
+        long sizeAfterSecond = firstSession.toFile().length();
+        assertThat(sizeAfterSecond).isGreaterThan(sizeAfterFirst);
+    }
+
+    private PromptSubcommand newCommand(String format) {
+        PromptSubcommand cmd = new PromptSubcommand();
+        cmd.model = "opus";
+        cmd.outputFormat = format;
+        cmd.maxTokens = 1024;
+        cmd.permissionMode = "danger-full-access";
+        return cmd;
+    }
+
+    private ProviderClient providerClient() {
+        return new AnthropicProviderClient(
+            "test-key",
+            baseUri,
+            HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build(),
+            JsonMapper.shared());
+    }
+
+    private PrintStream silent() {
+        return new PrintStream(OutputStream.nullOutputStream(), true, StandardCharsets.UTF_8);
     }
 }
