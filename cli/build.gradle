@@ -5,6 +5,8 @@ plugins {
 dependencies {
     implementation project(':core')
     implementation project(':api')
+    implementation project(':runtime')
+    implementation project(':tools')
     implementation libs.picocli
     implementation libs.logback.classic
 }
