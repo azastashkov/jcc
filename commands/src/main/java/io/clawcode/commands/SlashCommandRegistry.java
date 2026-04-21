@@ -1,6 +1,7 @@
 package io.clawcode.commands;
 
 import io.clawcode.commands.builtin.ClearCommand;
+import io.clawcode.commands.builtin.CompactCommand;
 import io.clawcode.commands.builtin.ConfigCommand;
 import io.clawcode.commands.builtin.CostCommand;
 import io.clawcode.commands.builtin.ExitCommand;
@@ -47,6 +48,7 @@ public final class SlashCommandRegistry {
             new StatusCommand(),
             new CostCommand(),
             new ClearCommand(),
+            new CompactCommand(),
             new ConfigCommand(),
             mcp == null ? new McpStubCommand() : new McpCommand(mcp),
             new SkillsStubCommand(),

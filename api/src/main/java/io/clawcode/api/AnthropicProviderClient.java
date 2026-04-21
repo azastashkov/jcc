@@ -52,6 +52,7 @@ public final class AnthropicProviderClient implements ProviderClient {
             .uri(baseUrl.resolve("/v1/messages"))
             .header("x-api-key", apiKey)
             .header("anthropic-version", ANTHROPIC_VERSION)
+            .header("anthropic-beta", "prompt-caching-2024-07-31")
             .header("content-type", "application/json")
             .header("accept", "text/event-stream")
             .timeout(Duration.ofMinutes(10))
