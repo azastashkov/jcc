@@ -1,0 +1,19 @@
+plugins {
+    id 'application'
+}
+
+dependencies {
+    implementation project(':core')
+    implementation project(':api')
+    implementation libs.picocli
+    implementation libs.logback.classic
+}
+
+application {
+    mainClass = 'io.clawcode.cli.Main'
+    applicationName = 'claw'
+}
+
+run {
+    standardInput = System.in
+}

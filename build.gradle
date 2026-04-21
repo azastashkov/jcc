@@ -1,0 +1,46 @@
+plugins {
+    id 'java'
+}
+
+allprojects {
+    group = 'io.clawcode'
+    version = '0.1.0-SNAPSHOT'
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'java-library'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        implementation libs.slf4j.api
+
+        testImplementation libs.junit.jupiter
+        testImplementation libs.assertj.core
+        testImplementation libs.mockito.core
+        testRuntimeOnly libs.junit.platform.launcher
+        testRuntimeOnly libs.logback.classic
+    }
+
+    test {
+        useJUnitPlatform()
+        testLogging {
+            events 'passed', 'skipped', 'failed'
+            showStandardStreams = false
+        }
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+        options.compilerArgs += ['-Xlint:all', '-parameters']
+    }
+}
