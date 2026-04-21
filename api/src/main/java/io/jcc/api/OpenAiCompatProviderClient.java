@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.jcc.core.ContentBlock;
 import io.jcc.core.JsonMapper;
+import io.jcc.core.ToolResultContentBlock;
 import io.jcc.core.Usage;
 
 import java.io.IOException;
@@ -16,13 +17,12 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Duration;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Flow;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * OpenAI-compatible chat.completions provider. Supports text exchanges; tool-calls
- * passthrough is intentionally omitted in M4 and planned for M7.
- */
 public final class OpenAiCompatProviderClient implements ProviderClient {
 
     private final HttpClient httpClient;
@@ -98,6 +98,20 @@ public final class OpenAiCompatProviderClient implements ProviderClient {
         }
         if (req.reasoningEffort() != null) root.put("reasoning_effort", req.reasoningEffort());
 
+        if (req.tools() != null && !req.tools().isEmpty()) {
+            ArrayNode tools = root.putArray("tools");
+            for (ToolDefinition t : req.tools()) {
+                ObjectNode tool = tools.addObject();
+                tool.put("type", "function");
+                ObjectNode fn = tool.putObject("function");
+                fn.put("name", t.name());
+                if (t.description() != null && !t.description().isBlank()) {
+                    fn.put("description", t.description());
+                }
+                fn.set("parameters", normalizeSchema(t.inputSchema()));
+            }
+        }
+
         ArrayNode messages = root.putArray("messages");
         if (req.system() != null && !req.system().isBlank()) {
             ObjectNode sys = messages.addObject();
@@ -105,29 +119,96 @@ public final class OpenAiCompatProviderClient implements ProviderClient {
             sys.put("content", req.system());
         }
         for (InputMessage m : req.messages()) {
-            String flatText = flatten(m.content());
-            if (flatText.isEmpty()) continue;
-            ObjectNode obj = messages.addObject();
-            obj.put("role", m.role());
-            obj.put("content", flatText);
+            appendMessage(messages, m);
         }
         return root;
     }
 
-    private static String flatten(java.util.List<ContentBlock> blocks) {
-        StringBuilder sb = new StringBuilder();
+    private void appendMessage(ArrayNode messages, InputMessage m) {
+        List<ContentBlock> blocks = m.content();
+        List<ContentBlock.ToolResult> toolResults = new java.util.ArrayList<>();
+        List<ContentBlock.ToolUse> toolUses = new java.util.ArrayList<>();
+        StringBuilder text = new StringBuilder();
         for (ContentBlock b : blocks) {
-            if (b instanceof ContentBlock.Text t) {
-                sb.append(t.text());
-            } else if (b instanceof ContentBlock.ToolResult r) {
-                for (var inner : r.content()) {
-                    if (inner instanceof io.jcc.core.ToolResultContentBlock.Text tr) {
-                        sb.append("[tool_result]\n").append(tr.text()).append('\n');
+            switch (b) {
+                case ContentBlock.Text t -> text.append(t.text());
+                case ContentBlock.ToolUse use -> toolUses.add(use);
+                case ContentBlock.ToolResult r -> toolResults.add(r);
+                case ContentBlock.Thinking ignored -> {}
+                case ContentBlock.RedactedThinking ignored -> {}
+            }
+        }
+
+        if (!toolResults.isEmpty()) {
+            for (ContentBlock.ToolResult r : toolResults) {
+                ObjectNode tool = messages.addObject();
+                tool.put("role", "tool");
+                tool.put("tool_call_id", r.toolUseId());
+                tool.put("content", flattenToolResult(r));
+            }
+            return;
+        }
+
+        if ("assistant".equals(m.role()) && !toolUses.isEmpty()) {
+            ObjectNode obj = messages.addObject();
+            obj.put("role", "assistant");
+            if (text.length() > 0) {
+                obj.put("content", text.toString());
+            } else {
+                obj.putNull("content");
+            }
+            ArrayNode calls = obj.putArray("tool_calls");
+            for (ContentBlock.ToolUse use : toolUses) {
+                ObjectNode call = calls.addObject();
+                call.put("id", use.id());
+                call.put("type", "function");
+                ObjectNode fn = call.putObject("function");
+                fn.put("name", use.name());
+                fn.put("arguments", serializeArgs(use.input()));
+            }
+            return;
+        }
+
+        if (text.length() == 0) return;
+        ObjectNode obj = messages.addObject();
+        obj.put("role", m.role());
+        obj.put("content", text.toString());
+    }
+
+    private String serializeArgs(JsonNode input) {
+        try {
+            if (input == null || input.isNull()) return "{}";
+            return mapper.writeValueAsString(input);
+        } catch (JsonProcessingException e) {
+            throw new ApiException("Failed to serialize tool arguments", e);
+        }
+    }
+
+    private String flattenToolResult(ContentBlock.ToolResult r) {
+        StringBuilder sb = new StringBuilder();
+        for (ToolResultContentBlock part : r.content()) {
+            switch (part) {
+                case ToolResultContentBlock.Text t -> sb.append(t.text());
+                case ToolResultContentBlock.Json j -> {
+                    try {
+                        sb.append(mapper.writeValueAsString(j.value()));
+                    } catch (JsonProcessingException e) {
+                        throw new ApiException("Failed to serialize tool_result json", e);
                     }
                 }
             }
         }
         return sb.toString();
+    }
+
+    private JsonNode normalizeSchema(JsonNode schema) {
+        if (schema == null || schema.isNull() || !schema.isObject()) {
+            ObjectNode empty = mapper.createObjectNode();
+            empty.put("type", "object");
+            empty.putObject("properties");
+            return empty;
+        }
+        return schema;
     }
 
     static final class OpenAiStreamTranslator {
@@ -137,6 +218,8 @@ public final class OpenAiCompatProviderClient implements ProviderClient {
         private final StringBuilder dataBuffer = new StringBuilder();
         private boolean messageStarted;
         private boolean textBlockStarted;
+        private int nextContentIndex;
+        private final Map<Integer, PendingToolCall> pendingToolCalls = new LinkedHashMap<>();
         private String finishReason;
         private int outputTokens;
 
@@ -199,15 +282,34 @@ public final class OpenAiCompatProviderClient implements ProviderClient {
             if (choices.isArray() && !choices.isEmpty()) {
                 JsonNode choice = choices.get(0);
                 JsonNode delta = choice.path("delta");
+
                 JsonNode contentNode = delta.path("content");
                 if (contentNode.isTextual() && !contentNode.asText().isEmpty()) {
                     if (!textBlockStarted) {
-                        handler.onEvent(new StreamEvent.ContentBlockStart(0, new ContentBlock.Text("")));
+                        handler.onEvent(new StreamEvent.ContentBlockStart(
+                            nextContentIndex, new ContentBlock.Text("")));
                         textBlockStarted = true;
                     }
-                    handler.onEvent(new StreamEvent.ContentBlockDeltaEvent(0,
+                    handler.onEvent(new StreamEvent.ContentBlockDeltaEvent(
+                        nextContentIndex,
                         new ContentBlockDelta.TextDelta(contentNode.asText())));
                 }
+
+                JsonNode toolCalls = delta.path("tool_calls");
+                if (toolCalls.isArray()) {
+                    for (JsonNode tc : toolCalls) {
+                        int idx = tc.path("index").asInt(0);
+                        PendingToolCall p = pendingToolCalls
+                            .computeIfAbsent(idx, i -> new PendingToolCall());
+                        if (tc.hasNonNull("id")) p.id = tc.get("id").asText();
+                        JsonNode fn = tc.path("function");
+                        if (fn.hasNonNull("name")) p.name = fn.get("name").asText();
+                        if (fn.hasNonNull("arguments")) {
+                            p.arguments.append(fn.get("arguments").asText());
+                        }
+                    }
+                }
+
                 if (choice.hasNonNull("finish_reason")) {
                     finishReason = choice.get("finish_reason").asText();
                 }
@@ -222,9 +324,28 @@ public final class OpenAiCompatProviderClient implements ProviderClient {
         private void finish() {
             if (!messageStarted) return;
             if (textBlockStarted) {
-                handler.onEvent(new StreamEvent.ContentBlockStop(0));
+                handler.onEvent(new StreamEvent.ContentBlockStop(nextContentIndex));
                 textBlockStarted = false;
+                nextContentIndex++;
             }
+
+            int counter = 0;
+            for (PendingToolCall p : pendingToolCalls.values()) {
+                String id = p.id != null ? p.id : "call_" + counter;
+                String name = p.name != null ? p.name : "";
+                handler.onEvent(new StreamEvent.ContentBlockStart(
+                    nextContentIndex,
+                    new ContentBlock.ToolUse(id, name, mapper.createObjectNode())));
+                String args = p.arguments.length() == 0 ? "{}" : p.arguments.toString();
+                handler.onEvent(new StreamEvent.ContentBlockDeltaEvent(
+                    nextContentIndex,
+                    new ContentBlockDelta.InputJsonDelta(args)));
+                handler.onEvent(new StreamEvent.ContentBlockStop(nextContentIndex));
+                nextContentIndex++;
+                counter++;
+            }
+            pendingToolCalls.clear();
+
             String stop = finishReason == null ? "end_turn" : translateFinish(finishReason);
             handler.onEvent(new StreamEvent.MessageDeltaEvent(
                 new StreamEvent.MessageDelta(stop, null),
@@ -233,6 +354,7 @@ public final class OpenAiCompatProviderClient implements ProviderClient {
             messageStarted = false;
             finishReason = null;
             outputTokens = 0;
+            nextContentIndex = 0;
         }
 
         private static String translateFinish(String openAi) {
@@ -243,6 +365,12 @@ public final class OpenAiCompatProviderClient implements ProviderClient {
                 case "content_filter" -> "refusal";
                 default -> openAi;
             };
+        }
+
+        private static final class PendingToolCall {
+            String id;
+            String name;
+            final StringBuilder arguments = new StringBuilder();
         }
     }
 
