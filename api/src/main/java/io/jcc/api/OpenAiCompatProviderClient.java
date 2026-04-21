@@ -227,7 +227,6 @@ public final class OpenAiCompatProviderClient implements ProviderClient {
         private int outputTokens;
 
         private final StringBuilder pendingText = new StringBuilder();
-        private boolean textDecisionMade;
         private boolean hermesMode;
 
         OpenAiStreamTranslator(ObjectMapper mapper, StreamEventHandler handler, String model) {
@@ -323,52 +322,78 @@ public final class OpenAiCompatProviderClient implements ProviderClient {
 
         private void onContentDelta(String chunk) {
             pendingText.append(chunk);
-
-            if (!textDecisionMade) {
-                decidePendingText();
-                if (!textDecisionMade) return;
-            }
             if (hermesMode) return;
-
-            if (!textBlockStarted) {
-                handler.onEvent(new StreamEvent.ContentBlockStart(
-                    nextContentIndex, new ContentBlock.Text("")));
-                textBlockStarted = true;
-            }
-            String toFlush = pendingText.toString();
-            pendingText.setLength(0);
-            handler.onEvent(new StreamEvent.ContentBlockDeltaEvent(
-                nextContentIndex,
-                new ContentBlockDelta.TextDelta(toFlush)));
+            flushSafeText();
         }
 
-        private void decidePendingText() {
-            int i = 0;
-            while (i < pendingText.length() && Character.isWhitespace(pendingText.charAt(i))) i++;
-            if (i == pendingText.length()) return;
-            String trimmedHead = pendingText.substring(i);
+        private void flushSafeText() {
+            int markerIdx = earliestHermesMarker(pendingText);
+            int emitUpTo;
+            if (markerIdx >= 0) {
+                emitUpTo = markerIdx;
+            } else {
+                emitUpTo = pendingText.length() - longestTrailingHermesPrefix(pendingText);
+            }
 
-            if (startsWith(trimmedHead, HERMES_FN_PREFIX)
-                || startsWith(trimmedHead, HERMES_WRAPPER_PREFIX)) {
-                textDecisionMade = true;
+            if (emitUpTo > 0) {
+                String toFlush = pendingText.substring(0, emitUpTo);
+                pendingText.delete(0, emitUpTo);
+                if (!textBlockStarted) {
+                    handler.onEvent(new StreamEvent.ContentBlockStart(
+                        nextContentIndex, new ContentBlock.Text("")));
+                    textBlockStarted = true;
+                }
+                handler.onEvent(new StreamEvent.ContentBlockDeltaEvent(
+                    nextContentIndex,
+                    new ContentBlockDelta.TextDelta(toFlush)));
+            }
+
+            if (markerIdx >= 0) {
                 hermesMode = true;
-                return;
             }
-            if (isPrefixOf(trimmedHead, HERMES_FN_PREFIX)
-                || isPrefixOf(trimmedHead, HERMES_WRAPPER_PREFIX)) {
-                return;
-            }
-            textDecisionMade = true;
-            hermesMode = false;
         }
 
-        private static boolean startsWith(String s, String target) {
-            return s.length() >= target.length() && s.regionMatches(0, target, 0, target.length());
+        private static int earliestHermesMarker(CharSequence s) {
+            int fn = indexOf(s, HERMES_FN_PREFIX);
+            int tc = indexOf(s, HERMES_WRAPPER_PREFIX);
+            if (fn < 0) return tc;
+            if (tc < 0) return fn;
+            return Math.min(fn, tc);
         }
 
-        private static boolean isPrefixOf(String partial, String full) {
-            return partial.length() < full.length()
-                && full.regionMatches(0, partial, 0, partial.length());
+        private static int indexOf(CharSequence s, String needle) {
+            int limit = s.length() - needle.length();
+            outer:
+            for (int i = 0; i <= limit; i++) {
+                for (int j = 0; j < needle.length(); j++) {
+                    if (s.charAt(i + j) != needle.charAt(j)) continue outer;
+                }
+                return i;
+            }
+            return -1;
+        }
+
+        private static int longestTrailingHermesPrefix(CharSequence s) {
+            int len = s.length();
+            int max = Math.max(HERMES_FN_PREFIX.length(), HERMES_WRAPPER_PREFIX.length()) - 1;
+            int scanFrom = Math.max(0, len - max);
+            for (int p = scanFrom; p < len; p++) {
+                if (s.charAt(p) != '<') continue;
+                int tailLen = len - p;
+                if (isPrefix(s, p, tailLen, HERMES_FN_PREFIX)
+                    || isPrefix(s, p, tailLen, HERMES_WRAPPER_PREFIX)) {
+                    return tailLen;
+                }
+            }
+            return 0;
+        }
+
+        private static boolean isPrefix(CharSequence s, int off, int tailLen, String marker) {
+            if (tailLen >= marker.length()) return false;
+            for (int j = 0; j < tailLen; j++) {
+                if (s.charAt(off + j) != marker.charAt(j)) return false;
+            }
+            return true;
         }
 
         private void finish() {
@@ -425,7 +450,6 @@ public final class OpenAiCompatProviderClient implements ProviderClient {
             finishReason = null;
             outputTokens = 0;
             nextContentIndex = 0;
-            textDecisionMade = false;
             hermesMode = false;
         }
 

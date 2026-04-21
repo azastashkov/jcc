@@ -244,6 +244,70 @@ class OpenAiCompatProviderClientTest {
     }
 
     @Test
+    void extractsHermesToolCallEvenWhenPrecededByNarrativeText() {
+        responseBody = """
+            data: {"id":"chatcmpl-1","choices":[{"delta":{"role":"assistant","content":"I'll help you."},"index":0,"finish_reason":null}]}
+
+            data: {"id":"chatcmpl-1","choices":[{"delta":{"content":" Let me locate that file.\\n\\n<tool_call>\\n<function=glob>\\n<parameter=pattern>\\n**/AnthropicProviderClient.java\\n</parameter>\\n</function>\\n</tool_call>"},"index":0,"finish_reason":null}]}
+
+            data: {"id":"chatcmpl-1","choices":[{"delta":{},"index":0,"finish_reason":"stop"}],"usage":{"completion_tokens":25}}
+
+            data: [DONE]
+
+            """;
+
+        MessageRequest req = MessageRequest.builder()
+            .model("qwen")
+            .maxTokens(200)
+            .messages(List.of(InputMessage.userText(
+                "Write unit test for AnthropicProviderClient.java")))
+            .build();
+
+        List<StreamEvent> events = new ArrayList<>();
+        client().stream(req, events::add);
+
+        StreamEvent.ContentBlockStart toolStart = (StreamEvent.ContentBlockStart) events.stream()
+            .filter(e -> e instanceof StreamEvent.ContentBlockStart cbs
+                && cbs.contentBlock() instanceof ContentBlock.ToolUse)
+            .findFirst()
+            .orElseThrow(() -> new AssertionError(
+                "tool_use block not emitted; Hermes XML after narrative text was not extracted"));
+        ContentBlock.ToolUse use = (ContentBlock.ToolUse) toolStart.contentBlock();
+        assertThat(use.name()).isEqualTo("glob");
+
+        String accumulatedArgs = events.stream()
+            .filter(e -> e instanceof StreamEvent.ContentBlockDeltaEvent cbd
+                && cbd.delta() instanceof ContentBlockDelta.InputJsonDelta)
+            .map(e -> ((ContentBlockDelta.InputJsonDelta) ((StreamEvent.ContentBlockDeltaEvent) e).delta())
+                .partialJson())
+            .reduce("", String::concat);
+        JsonNode args;
+        try {
+            args = JsonMapper.shared().readTree(accumulatedArgs);
+        } catch (IOException e) {
+            throw new AssertionError("arguments not valid JSON: " + accumulatedArgs, e);
+        }
+        assertThat(args.path("pattern").asText())
+            .isEqualTo("**/AnthropicProviderClient.java");
+
+        StreamEvent.MessageDeltaEvent md = (StreamEvent.MessageDeltaEvent) events.stream()
+            .filter(e -> e instanceof StreamEvent.MessageDeltaEvent)
+            .findFirst().orElseThrow();
+        assertThat(md.delta().stopReason()).isEqualTo("tool_use");
+
+        String emittedText = events.stream()
+            .filter(e -> e instanceof StreamEvent.ContentBlockDeltaEvent cbd
+                && cbd.delta() instanceof ContentBlockDelta.TextDelta)
+            .map(e -> ((ContentBlockDelta.TextDelta) ((StreamEvent.ContentBlockDeltaEvent) e).delta()).text())
+            .reduce("", String::concat);
+        assertThat(emittedText)
+            .as("Hermes XML should not leak through as streamed text")
+            .doesNotContain("<function=")
+            .doesNotContain("<tool_call>");
+        assertThat(emittedText).contains("I'll help you.");
+    }
+
+    @Test
     void passesThroughPlainTextWhenNoHermesMarkers() {
         responseBody = """
             data: {"id":"chatcmpl-1","choices":[{"delta":{"role":"assistant","content":"Hello "},"index":0,"finish_reason":null}]}
