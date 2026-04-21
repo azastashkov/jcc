@@ -7,7 +7,9 @@ dependencies {
     implementation project(':api')
     implementation project(':runtime')
     implementation project(':tools')
+    implementation project(':commands')
     implementation libs.picocli
+    implementation libs.jline
     implementation libs.logback.classic
 }
 

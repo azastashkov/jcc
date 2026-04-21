@@ -54,6 +54,10 @@ public final class ConversationRuntime {
         history.add(message);
     }
 
+    public void clearHistory() {
+        history.clear();
+    }
+
     public TurnSummary runTurn(String userPrompt, AssistantEventHandler handler) {
         history.add(InputMessage.userText(userPrompt));
 
