@@ -6,7 +6,7 @@
         </encoder>
     </appender>
 
-    <logger name="io.clawcode" level="INFO"/>
+    <logger name="io.jcc" level="INFO"/>
     <logger name="jdk.httpclient" level="WARN"/>
 
     <root level="WARN">

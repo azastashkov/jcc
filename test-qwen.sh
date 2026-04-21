@@ -7,19 +7,19 @@
 #   - cc-java is built (./gradlew :cli:installDist)
 set -euo pipefail
 
-CLAW=/Users/azastashkov/projects/github/cc-java/cli/build/install/claw/bin/claw
+JCC=/Users/azastashkov/projects/github/cc-java/cli/build/install/jcc/bin/jcc
 MODEL="${MODEL:-qwen3-coder:30b-a3b-fp16}"
 
 export OPENAI_BASE_URL="http://localhost:11434/v1"
 export OPENAI_API_KEY="ollama"
 unset ANTHROPIC_API_KEY
 
-echo "=== 1) claw --version ==="
-"$CLAW" --version
+echo "=== 1) jcc --version ==="
+"$JCC" --version
 
 echo
 echo "=== 2) prompt text, streaming plaintext ==="
-"$CLAW" prompt \
+"$JCC" prompt \
   --model "$MODEL" \
   --max-tokens 200 \
   --permission-mode read-only \
@@ -28,7 +28,7 @@ echo "=== 2) prompt text, streaming plaintext ==="
 echo
 echo
 echo "=== 3) prompt, NDJSON output ==="
-"$CLAW" prompt \
+"$JCC" prompt \
   --model "$MODEL" \
   --max-tokens 120 \
   --output-format json \

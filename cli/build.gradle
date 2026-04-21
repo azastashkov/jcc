@@ -14,8 +14,8 @@ dependencies {
 }
 
 application {
-    mainClass = 'io.clawcode.cli.Main'
-    applicationName = 'claw'
+    mainClass = 'io.jcc.cli.Main'
+    applicationName = 'jcc'
 }
 
 run {
@@ -47,13 +47,13 @@ tasks.register('jlinkImage') {
                  '--no-man-pages'
         }
 
-        def dist = file("$buildDir/install/claw")
+        def dist = file("$buildDir/install/jcc")
         copy {
             from dist
             into imageDir
         }
 
         println "jlink image created at: ${imageDir.absolutePath}"
-        println "Launch with: ${imageDir.absolutePath}/bin/claw --help"
+        println "Launch with: ${imageDir.absolutePath}/bin/jcc --help"
     }
 }
