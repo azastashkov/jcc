@@ -72,6 +72,54 @@ class TextRendererTest {
     }
 
     @Test
+    void usageReportPrintsCumulativeSnapshot() {
+        ByteArrayOutputStream buf = new ByteArrayOutputStream();
+        try (TextRenderer r = new TextRenderer(new PrintStream(buf, true, StandardCharsets.UTF_8))) {
+            r.onEvent(new AssistantEvent.UsageReport(new Usage(100, 0, 0, 50)));
+            r.onEvent(new AssistantEvent.TurnFinish("end_turn"));
+        }
+        String out = buf.toString(StandardCharsets.UTF_8);
+        assertThat(out).contains("sent=100").contains("recv=50");
+    }
+
+    @Test
+    void duplicateUsageReportsAreSuppressed() {
+        ByteArrayOutputStream buf = new ByteArrayOutputStream();
+        try (TextRenderer r = new TextRenderer(new PrintStream(buf, true, StandardCharsets.UTF_8))) {
+            r.onEvent(new AssistantEvent.UsageReport(new Usage(50, 0, 0, 25)));
+            r.onEvent(new AssistantEvent.UsageReport(new Usage(50, 0, 0, 25)));
+            r.onEvent(new AssistantEvent.TurnFinish("end_turn"));
+        }
+        String out = buf.toString(StandardCharsets.UTF_8);
+        int firstIdx = out.indexOf("sent=50 recv=25");
+        assertThat(firstIdx).isGreaterThanOrEqualTo(0);
+        int secondIdx = out.indexOf("sent=50 recv=25", firstIdx + 1);
+        assertThat(secondIdx).as("duplicate snapshot should be suppressed").isEqualTo(-1);
+    }
+
+    @Test
+    void sentIncludesCacheTokens() {
+        ByteArrayOutputStream buf = new ByteArrayOutputStream();
+        try (TextRenderer r = new TextRenderer(new PrintStream(buf, true, StandardCharsets.UTF_8))) {
+            r.onEvent(new AssistantEvent.UsageReport(new Usage(10, 100, 1000, 5)));
+            r.onEvent(new AssistantEvent.TurnFinish("end_turn"));
+        }
+        String out = buf.toString(StandardCharsets.UTF_8);
+        assertThat(out).contains("sent=1110").contains("recv=5");
+    }
+
+    @Test
+    void zeroUsageReportIsSuppressed() {
+        ByteArrayOutputStream buf = new ByteArrayOutputStream();
+        try (TextRenderer r = new TextRenderer(new PrintStream(buf, true, StandardCharsets.UTF_8))) {
+            r.onEvent(new AssistantEvent.UsageReport(Usage.EMPTY));
+            r.onEvent(new AssistantEvent.TurnFinish("end_turn"));
+        }
+        String out = buf.toString(StandardCharsets.UTF_8);
+        assertThat(out).doesNotContain("sent=0");
+    }
+
+    @Test
     void textDeltaStillStreamsInline() {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         try (TextRenderer r = new TextRenderer(new PrintStream(buf, true, StandardCharsets.UTF_8))) {

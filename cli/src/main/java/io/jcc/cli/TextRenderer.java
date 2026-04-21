@@ -9,6 +9,8 @@ public final class TextRenderer implements StreamingRenderer {
     private final PrintStream out;
     private boolean sawText;
     private Usage lastUsage = Usage.EMPTY;
+    private long lastPrintedSent = -1;
+    private long lastPrintedRecv = -1;
 
     public TextRenderer(PrintStream out) {
         this.out = out;
@@ -35,7 +37,18 @@ public final class TextRenderer implements StreamingRenderer {
                 out.printf("%s %s%n", prefix, abbreviate(firstLine(result.output()), 300));
                 out.flush();
             }
-            case AssistantEvent.UsageReport report -> lastUsage = report.usage();
+            case AssistantEvent.UsageReport report -> {
+                lastUsage = report.usage();
+                long sent = sentTokens(lastUsage);
+                long recv = lastUsage.outputTokens();
+                if (sent == 0 && recv == 0) break;
+                if (sent == lastPrintedSent && recv == lastPrintedRecv) break;
+                lastPrintedSent = sent;
+                lastPrintedRecv = recv;
+                breakInlineText();
+                out.printf("  · sent=%d recv=%d%n", sent, recv);
+                out.flush();
+            }
             case AssistantEvent.TurnFinish finish -> {
                 if (sawText) {
                     out.println();
@@ -65,6 +78,12 @@ public final class TextRenderer implements StreamingRenderer {
         if (s == null) return "";
         if (s.length() <= max) return s;
         return s.substring(0, max) + "…";
+    }
+
+    private static long sentTokens(Usage u) {
+        return (long) u.inputTokens()
+            + u.cacheCreationInputTokens()
+            + u.cacheReadInputTokens();
     }
 
     private static String firstLine(String s) {
