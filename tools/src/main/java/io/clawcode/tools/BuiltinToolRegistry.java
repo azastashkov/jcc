@@ -41,6 +41,13 @@ public final class BuiltinToolRegistry implements ToolExecutor {
             new WebSearchTool());
     }
 
+    public static List<BuiltinTool> withAgent(
+        io.clawcode.runtime.subagent.SubagentExecutor subagentExecutor) {
+        List<BuiltinTool> all = new java.util.ArrayList<>(defaults());
+        all.add(new AgentTool(subagentExecutor));
+        return List.copyOf(all);
+    }
+
     @Override
     public List<ToolDefinition> toolDefinitions() {
         return tools.values().stream().map(BuiltinTool::spec).toList();

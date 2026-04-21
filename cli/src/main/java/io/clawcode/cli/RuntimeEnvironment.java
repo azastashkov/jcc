@@ -4,7 +4,9 @@ import io.clawcode.api.AnthropicProviderClient;
 import io.clawcode.api.InputMessage;
 import io.clawcode.api.OpenAiCompatProviderClient;
 import io.clawcode.api.ProviderClient;
+import io.clawcode.core.Concurrency;
 import io.clawcode.core.MessageRole;
+import io.clawcode.runtime.CompositeToolExecutor;
 import io.clawcode.runtime.ConfigLoader;
 import io.clawcode.runtime.ConversationMessage;
 import io.clawcode.runtime.ConversationRuntime;
@@ -15,6 +17,10 @@ import io.clawcode.runtime.RuntimeConfig;
 import io.clawcode.runtime.Session;
 import io.clawcode.runtime.SessionStore;
 import io.clawcode.runtime.ToolContext;
+import io.clawcode.runtime.ToolExecutor;
+import io.clawcode.runtime.mcp.McpServerManager;
+import io.clawcode.runtime.subagent.SubagentExecutor;
+import io.clawcode.runtime.subagent.TaskRegistry;
 import io.clawcode.tools.BuiltinToolRegistry;
 
 import java.net.URI;
@@ -30,28 +36,30 @@ public final class RuntimeEnvironment {
     public final PermissionMode permissionMode;
     public final PermissionPolicy permissions;
     public final ProviderClient provider;
-    public final BuiltinToolRegistry tools;
+    public final ToolExecutor toolExecutor;
     public final ToolContext toolCtx;
     public final SessionStore sessionStore;
     public final Session session;
     public final ConversationRuntime conversation;
+    public final McpServerManager mcp;
+    public final TaskRegistry tasks;
+    public final Concurrency concurrency;
 
-    private RuntimeEnvironment(RuntimeConfig config, String model, int maxTokens,
-                               PermissionMode permissionMode, PermissionPolicy permissions,
-                               ProviderClient provider, BuiltinToolRegistry tools,
-                               ToolContext toolCtx, SessionStore sessionStore, Session session,
-                               ConversationRuntime conversation) {
-        this.config = config;
-        this.model = model;
-        this.maxTokens = maxTokens;
-        this.permissionMode = permissionMode;
-        this.permissions = permissions;
-        this.provider = provider;
-        this.tools = tools;
-        this.toolCtx = toolCtx;
-        this.sessionStore = sessionStore;
-        this.session = session;
-        this.conversation = conversation;
+    private RuntimeEnvironment(Builder b) {
+        this.config = b.config;
+        this.model = b.model;
+        this.maxTokens = b.maxTokens;
+        this.permissionMode = b.permissionMode;
+        this.permissions = b.permissions;
+        this.provider = b.provider;
+        this.toolExecutor = b.toolExecutor;
+        this.toolCtx = b.toolCtx;
+        this.sessionStore = b.sessionStore;
+        this.session = b.session;
+        this.conversation = b.conversation;
+        this.mcp = b.mcp;
+        this.tasks = b.tasks;
+        this.concurrency = b.concurrency;
     }
 
     public static RuntimeEnvironment bootstrap(Options opts, SessionStore sessionStore) {
@@ -68,8 +76,11 @@ public final class RuntimeEnvironment {
                 : null,
             PermissionMode.WORKSPACE_WRITE.cliName()));
 
-        BuiltinToolRegistry tools = new BuiltinToolRegistry();
-        PermissionPolicy permissions = tools.applyRequirementsTo(new PermissionPolicy(mode)).build();
+        BuiltinToolRegistry builtinForPermissions = new BuiltinToolRegistry();
+        PermissionPolicy permissions = builtinForPermissions
+            .applyRequirementsTo(new PermissionPolicy(mode))
+            .build()
+            .withToolRequirement("Agent", PermissionMode.DANGER_FULL_ACCESS);
         HttpClient webHttp = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(30))
             .build();
@@ -77,19 +88,52 @@ public final class RuntimeEnvironment {
 
         ProviderClient provider = selectProvider();
 
+        Concurrency concurrency = new Concurrency();
+        McpServerManager mcp = config.mcp().isEmpty()
+            ? null
+            : McpServerManager.startAll(config.mcp(), concurrency.virtualThreads());
+
+        TaskRegistry tasks = new TaskRegistry();
+        BuiltinToolRegistry baseTools = new BuiltinToolRegistry();
+        ToolExecutor parentExec = mcp != null
+            ? new CompositeToolExecutor(baseTools, mcp)
+            : baseTools;
+        SubagentExecutor subagentExec = new SubagentExecutor(
+            provider, parentExec, permissions, PermissionPrompter.DENY_ALL,
+            toolCtx, resolvedModel, resolvedMaxTokens, tasks);
+
+        BuiltinToolRegistry builtinsWithAgent = new BuiltinToolRegistry(
+            BuiltinToolRegistry.withAgent(subagentExec));
+        ToolExecutor toolExecutor = mcp != null
+            ? new CompositeToolExecutor(builtinsWithAgent, mcp)
+            : builtinsWithAgent;
+
         Session session = opts.resume != null
             ? sessionStore.load(opts.resume)
             : sessionStore.createNew(workingDir.toString(), resolvedModel);
 
         ConversationRuntime conversation = new ConversationRuntime(
-            provider, tools, permissions, PermissionPrompter.DENY_ALL, toolCtx,
+            provider, toolExecutor, permissions, PermissionPrompter.DENY_ALL, toolCtx,
             resolvedModel, resolvedMaxTokens, null);
         session.messages().forEach(cm ->
             conversation.addHistory(new InputMessage(cm.role().wire(), cm.blocks())));
 
-        return new RuntimeEnvironment(
-            config, resolvedModel, resolvedMaxTokens, mode, permissions,
-            provider, tools, toolCtx, sessionStore, session, conversation);
+        Builder b = new Builder();
+        b.config = config;
+        b.model = resolvedModel;
+        b.maxTokens = resolvedMaxTokens;
+        b.permissionMode = mode;
+        b.permissions = permissions;
+        b.provider = provider;
+        b.toolExecutor = toolExecutor;
+        b.toolCtx = toolCtx;
+        b.sessionStore = sessionStore;
+        b.session = session;
+        b.conversation = conversation;
+        b.mcp = mcp;
+        b.tasks = tasks;
+        b.concurrency = concurrency;
+        return new RuntimeEnvironment(b);
     }
 
     public void persistNewHistory(int historyBefore) {
@@ -97,6 +141,11 @@ public final class RuntimeEnvironment {
             .subList(historyBefore, conversation.history().size())
             .forEach(msg -> session.append(new ConversationMessage(
                 MessageRole.fromWire(msg.role()), msg.content(), null)));
+    }
+
+    public void close() {
+        if (mcp != null) mcp.close();
+        if (concurrency != null) concurrency.close();
     }
 
     public record Options(String model, Integer maxTokens, String permissionMode, String resume) {}
@@ -135,5 +184,22 @@ public final class RuntimeEnvironment {
             if (v != null) return v;
         }
         throw new IllegalStateException("no non-null integer provided");
+    }
+
+    private static final class Builder {
+        RuntimeConfig config;
+        String model;
+        int maxTokens;
+        PermissionMode permissionMode;
+        PermissionPolicy permissions;
+        ProviderClient provider;
+        ToolExecutor toolExecutor;
+        ToolContext toolCtx;
+        SessionStore sessionStore;
+        Session session;
+        ConversationRuntime conversation;
+        McpServerManager mcp;
+        TaskRegistry tasks;
+        Concurrency concurrency;
     }
 }

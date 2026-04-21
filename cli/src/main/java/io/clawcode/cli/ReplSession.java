@@ -3,11 +3,8 @@ package io.clawcode.cli;
 import io.clawcode.commands.SlashCommandRegistry;
 import io.clawcode.commands.SlashCommandResult;
 import io.clawcode.commands.SlashContext;
-import io.clawcode.core.ContentBlock;
 import io.clawcode.core.Usage;
 import io.clawcode.runtime.AssistantEventHandler;
-import io.clawcode.runtime.ConversationRuntime;
-import io.clawcode.runtime.Session;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
@@ -84,7 +81,7 @@ public final class ReplSession {
             env.config,
             env.session,
             () -> runningUsage,
-            this::clearConversationHistory,
+            env.conversation::clearHistory,
             out);
         SlashCommandResult result = slashRegistry.dispatch(line, ctx);
         if (result instanceof SlashCommandResult.Unknown u) {
@@ -120,23 +117,6 @@ public final class ReplSession {
             out.println();
             out.println("Turn failed: " + e.getMessage());
         }
-    }
-
-    private void clearConversationHistory() {
-        ConversationRuntime fresh = new ConversationRuntime(
-            env.provider, env.tools, env.permissions,
-            io.clawcode.runtime.PermissionPrompter.DENY_ALL,
-            env.toolCtx, env.model, env.maxTokens, null);
-        // Mutate env.conversation so references to it still see the cleared state.
-        // Simplest: copy over by rebuilding conversation field not feasible since it's final.
-        // Instead: clear the underlying list by running a no-op turn path — but there is no
-        // public clear. For M4 we recreate the history by draining via a re-load; since Session
-        // still persists the full history, the easiest semantic is: drop in-memory history and
-        // refresh from disk after a reset of the mutable list.
-        // Pragmatic approach: we use the fact that ConversationRuntime.history() is a copy.
-        // To actually drop history, we need a mutator — add one.
-        fresh.toString(); // placeholder to avoid unused-var; the real clear is below.
-        env.conversation.clearHistory();
     }
 
     private static Path historyPath() {

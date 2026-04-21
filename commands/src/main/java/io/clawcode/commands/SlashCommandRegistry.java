@@ -9,7 +9,9 @@ import io.clawcode.commands.builtin.McpCommand;
 import io.clawcode.commands.builtin.McpStubCommand;
 import io.clawcode.commands.builtin.SkillsStubCommand;
 import io.clawcode.commands.builtin.StatusCommand;
+import io.clawcode.commands.builtin.SubagentCommand;
 import io.clawcode.runtime.mcp.McpServerManager;
+import io.clawcode.runtime.subagent.TaskRegistry;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -28,10 +30,17 @@ public final class SlashCommandRegistry {
     }
 
     public static SlashCommandRegistry defaults() {
-        return withMcp(() -> null);
+        return build(() -> null, () -> null);
     }
 
     public static SlashCommandRegistry withMcp(java.util.function.Supplier<McpServerManager> mcp) {
+        return build(mcp, () -> null);
+    }
+
+    public static SlashCommandRegistry build(
+        java.util.function.Supplier<McpServerManager> mcp,
+        java.util.function.Supplier<TaskRegistry> tasks
+    ) {
         HelpCommand help = new HelpCommand();
         SlashCommandRegistry registry = new SlashCommandRegistry(List.of(
             help,
@@ -41,6 +50,7 @@ public final class SlashCommandRegistry {
             new ConfigCommand(),
             mcp == null ? new McpStubCommand() : new McpCommand(mcp),
             new SkillsStubCommand(),
+            new SubagentCommand(tasks == null ? () -> null : tasks),
             new ExitCommand()));
         help.bind(registry);
         return registry;
