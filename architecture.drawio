@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" agent="claude-code" version="24.0.0">
+  <diagram name="jcc Components" id="jcc-arch">
+    <mxGraphModel dx="2800" dy="1080" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2600" pageHeight="1020" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" value="jcc — Components Architecture" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=22;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="10" width="2520" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" value="Java 21 port of claw-code — 6 Gradle modules, strict downward dependencies" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=2;fontColor=#555555;" vertex="1" parent="1">
+          <mxGeometry x="40" y="46" width="2520" height="22" as="geometry" />
+        </mxCell>
+
+        <!-- ========= core ========= -->
+        <mxCell id="mod-core" value="core  (io.jcc.core)" style="swimlane;html=1;fontStyle=1;fontSize=13;fillColor=#FFF2CC;strokeColor=#D6B656;startSize=28;collapsible=0;horizontal=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="80" width="280" height="880" as="geometry" />
+        </mxCell>
+        <mxCell id="core-content" value="ContentBlock  «sealed»&#10;Text · Thinking · ToolUse · ToolResult" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D6B656;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-core">
+          <mxGeometry x="16" y="40" width="248" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="core-role" value="MessageRole" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D6B656;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-core">
+          <mxGeometry x="16" y="104" width="248" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="core-usage" value="Usage&#10;(input / output / cache tokens)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D6B656;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-core">
+          <mxGeometry x="16" y="148" width="248" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="core-result" value="Result&lt;T, E&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D6B656;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-core">
+          <mxGeometry x="16" y="204" width="248" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="core-mapper" value="JsonMapper&#10;(Jackson — SNAKE_CASE, jsr310)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D6B656;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-core">
+          <mxGeometry x="16" y="248" width="248" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="core-concurrency" value="Concurrency&#10;virtual-thread + 2-thread scheduled executors" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D6B656;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-core">
+          <mxGeometry x="16" y="304" width="248" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="core-trcb" value="ToolResultContentBlock" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D6B656;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-core">
+          <mxGeometry x="16" y="364" width="248" height="32" as="geometry" />
+        </mxCell>
+
+        <!-- ========= api ========= -->
+        <mxCell id="mod-api" value="api  (io.jcc.api)" style="swimlane;html=1;fontStyle=1;fontSize=13;fillColor=#DAE8FC;strokeColor=#6C8EBF;startSize=28;collapsible=0;horizontal=1;" vertex="1" parent="1">
+          <mxGeometry x="340" y="80" width="340" height="880" as="geometry" />
+        </mxCell>
+        <mxCell id="api-pc" value="ProviderClient  «interface»" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6C8EBF;fontSize=11;fontStyle=2;align=left;spacingLeft=8;" vertex="1" parent="mod-api">
+          <mxGeometry x="16" y="40" width="308" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="api-anthropic" value="AnthropicProviderClient&#10;native /v1/messages SSE" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6C8EBF;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-api">
+          <mxGeometry x="16" y="84" width="308" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="api-openai" value="OpenAiCompatProviderClient&#10;/v1/chat/completions translation" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6C8EBF;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-api">
+          <mxGeometry x="16" y="140" width="308" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="api-sse" value="SseLineParser" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6C8EBF;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-api">
+          <mxGeometry x="16" y="196" width="308" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="api-req" value="MessageRequest · InputMessage&#10;MessageResponse" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6C8EBF;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-api">
+          <mxGeometry x="16" y="240" width="308" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="api-stream" value="StreamEvent  «sealed»&#10;MessageStart · ContentBlockStart /Delta /Stop · MessageDelta · MessageStop" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6C8EBF;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-api">
+          <mxGeometry x="16" y="296" width="308" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="api-delta" value="ContentBlockDelta  «sealed»&#10;TextDelta · ThinkingDelta · InputJsonDelta" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6C8EBF;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-api">
+          <mxGeometry x="16" y="368" width="308" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="api-tools" value="ToolDefinition · ToolChoice" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6C8EBF;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-api">
+          <mxGeometry x="16" y="432" width="308" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="api-handler" value="StreamEventHandler  «interface»" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6C8EBF;fontSize=11;fontStyle=2;align=left;spacingLeft=8;" vertex="1" parent="mod-api">
+          <mxGeometry x="16" y="476" width="308" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="api-ex" value="ApiException · ProviderException" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6C8EBF;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-api">
+          <mxGeometry x="16" y="520" width="308" height="32" as="geometry" />
+        </mxCell>
+
+        <!-- ========= runtime ========= -->
+        <mxCell id="mod-runtime" value="runtime  (io.jcc.runtime)" style="swimlane;html=1;fontStyle=1;fontSize=13;fillColor=#D5E8D4;strokeColor=#82B366;startSize=28;collapsible=0;horizontal=1;" vertex="1" parent="1">
+          <mxGeometry x="700" y="80" width="400" height="880" as="geometry" />
+        </mxCell>
+        <mxCell id="rt-conv" value="ConversationRuntime&#10;agent tool loop — provider stream ↔ tool execution" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82B366;fontSize=11;fontStyle=1;align=left;spacingLeft=8;" vertex="1" parent="mod-runtime">
+          <mxGeometry x="16" y="40" width="368" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="rt-turn" value="TurnAssembler · TurnSummary&#10;AssistantEventHandler · ConversationMessage" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82B366;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-runtime">
+          <mxGeometry x="16" y="100" width="368" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="rt-session" value="SessionStore · Session · SessionEvent&#10;JSONL persistence — 256 KB rotation, 3 rotated max" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82B366;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-runtime">
+          <mxGeometry x="16" y="156" width="368" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="rt-config" value="ConfigLoader · RuntimeConfig · PermissionsConfig&#10;4-scope deep merge (~/.claude, .jcc.json, .jcc/settings(.local))" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82B366;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-runtime">
+          <mxGeometry x="16" y="216" width="368" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="rt-perm" value="PermissionPolicy&#10;5 modes — read-only · workspace-write · danger-full-access · prompt · allow" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82B366;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-runtime">
+          <mxGeometry x="16" y="276" width="368" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="rt-prompter" value="PermissionPrompter · PermissionRequest · PermissionOutcome" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82B366;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-runtime">
+          <mxGeometry x="16" y="340" width="368" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="rt-toolexec" value="ToolExecutor  «interface»&#10;ToolContext · ToolOutput · ToolError" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82B366;fontSize=11;fontStyle=2;align=left;spacingLeft=8;" vertex="1" parent="mod-runtime">
+          <mxGeometry x="16" y="384" width="368" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="rt-composite" value="CompositeToolExecutor · FilteringToolExecutor" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82B366;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-runtime">
+          <mxGeometry x="16" y="440" width="368" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="rt-mcp-mgr" value="McpServerManager&#10;lifecycle + tool discovery" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82B366;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-runtime">
+          <mxGeometry x="16" y="484" width="368" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="rt-mcp-cli" value="McpStdioClient · McpTool · McpServerConfig&#10;JSON-RPC over stdio (JsonRpcId, McpTransportException)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82B366;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-runtime">
+          <mxGeometry x="16" y="540" width="368" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="rt-sub-exec" value="SubagentExecutor · SubagentResult&#10;SubagentToolAllowlist — per-type tool restriction" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82B366;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-runtime">
+          <mxGeometry x="16" y="600" width="368" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="rt-taskreg" value="TaskRegistry · TaskRecord · TaskStatus" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82B366;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-runtime">
+          <mxGeometry x="16" y="660" width="368" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="rt-ex" value="ConfigException · SessionException" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82B366;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-runtime">
+          <mxGeometry x="16" y="704" width="368" height="32" as="geometry" />
+        </mxCell>
+
+        <!-- ========= tools ========= -->
+        <mxCell id="mod-tools" value="tools  (io.jcc.tools)" style="swimlane;html=1;fontStyle=1;fontSize=13;fillColor=#FFE6CC;strokeColor=#D79B00;startSize=28;collapsible=0;horizontal=1;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="80" width="320" height="880" as="geometry" />
+        </mxCell>
+        <mxCell id="tl-registry" value="BuiltinToolRegistry&#10;implements ToolExecutor" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D79B00;fontSize=11;fontStyle=1;align=left;spacingLeft=8;" vertex="1" parent="mod-tools">
+          <mxGeometry x="16" y="40" width="288" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="tl-bt" value="BuiltinTool  «interface» · ToolSchemas" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D79B00;fontSize=11;fontStyle=2;align=left;spacingLeft=8;" vertex="1" parent="mod-tools">
+          <mxGeometry x="16" y="96" width="288" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="tl-bash" value="BashTool&#10;/bin/sh -c · 120s timeout · 64 KB cap" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D79B00;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-tools">
+          <mxGeometry x="16" y="140" width="288" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="tl-read" value="ReadFileTool  (1 MB cap, offset/limit)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D79B00;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-tools">
+          <mxGeometry x="16" y="196" width="288" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="tl-write" value="WriteFileTool  (creates parent dirs)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D79B00;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-tools">
+          <mxGeometry x="16" y="240" width="288" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="tl-edit" value="EditFileTool  (unique find/replace, replace_all)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D79B00;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-tools">
+          <mxGeometry x="16" y="284" width="288" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="tl-glob" value="GlobTool  (≤500 paths, mtime-desc)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D79B00;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-tools">
+          <mxGeometry x="16" y="328" width="288" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="tl-grep" value="GrepTool  (regex file content search)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D79B00;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-tools">
+          <mxGeometry x="16" y="372" width="288" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="tl-fetch" value="WebFetchTool  (HTTP(S) GET ≤5 MB)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D79B00;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-tools">
+          <mxGeometry x="16" y="416" width="288" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="tl-search" value="WebSearchTool  (stub)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D79B00;fontSize=11;fontStyle=3;align=left;spacingLeft=8;" vertex="1" parent="mod-tools">
+          <mxGeometry x="16" y="460" width="288" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="tl-agent" value="AgentTool&#10;spawn sub-agent (danger-full-access)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D79B00;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-tools">
+          <mxGeometry x="16" y="504" width="288" height="44" as="geometry" />
+        </mxCell>
+
+        <!-- ========= commands ========= -->
+        <mxCell id="mod-commands" value="commands  (io.jcc.commands)" style="swimlane;html=1;fontStyle=1;fontSize=13;fillColor=#E1D5E7;strokeColor=#9673A6;startSize=28;collapsible=0;horizontal=1;" vertex="1" parent="1">
+          <mxGeometry x="1460" y="80" width="320" height="880" as="geometry" />
+        </mxCell>
+        <mxCell id="cmd-iface" value="SlashCommand  «interface»&#10;SlashContext · SlashCommandResult" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9673A6;fontSize=11;fontStyle=2;align=left;spacingLeft=8;" vertex="1" parent="mod-commands">
+          <mxGeometry x="16" y="40" width="288" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="cmd-reg" value="SlashCommandRegistry" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9673A6;fontSize=11;fontStyle=1;align=left;spacingLeft=8;" vertex="1" parent="mod-commands">
+          <mxGeometry x="16" y="96" width="288" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="cmd-help" value="/help  — HelpCommand" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9673A6;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-commands">
+          <mxGeometry x="16" y="140" width="288" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="cmd-status" value="/status  — StatusCommand" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9673A6;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-commands">
+          <mxGeometry x="16" y="176" width="288" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="cmd-cost" value="/cost  — CostCommand" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9673A6;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-commands">
+          <mxGeometry x="16" y="212" width="288" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="cmd-clear" value="/clear  — ClearCommand" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9673A6;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-commands">
+          <mxGeometry x="16" y="248" width="288" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="cmd-compact" value="/compact  — CompactCommand  (stub)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9673A6;fontSize=11;fontStyle=3;align=left;spacingLeft=8;" vertex="1" parent="mod-commands">
+          <mxGeometry x="16" y="284" width="288" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="cmd-config" value="/config  — ConfigCommand" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9673A6;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-commands">
+          <mxGeometry x="16" y="320" width="288" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="cmd-mcp" value="/mcp  — McpCommand · McpStubCommand" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9673A6;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-commands">
+          <mxGeometry x="16" y="356" width="288" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="cmd-skills" value="/skills  — SkillsStubCommand  (stub)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9673A6;fontSize=11;fontStyle=3;align=left;spacingLeft=8;" vertex="1" parent="mod-commands">
+          <mxGeometry x="16" y="392" width="288" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="cmd-sub" value="/subagent  — SubagentCommand" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9673A6;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-commands">
+          <mxGeometry x="16" y="428" width="288" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="cmd-exit" value="/exit  — ExitCommand" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9673A6;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-commands">
+          <mxGeometry x="16" y="464" width="288" height="28" as="geometry" />
+        </mxCell>
+
+        <!-- ========= cli ========= -->
+        <mxCell id="mod-cli" value="cli  (io.jcc.cli)" style="swimlane;html=1;fontStyle=1;fontSize=13;fillColor=#F8CECC;strokeColor=#B85450;startSize=28;collapsible=0;horizontal=1;" vertex="1" parent="1">
+          <mxGeometry x="1800" y="80" width="340" height="880" as="geometry" />
+        </mxCell>
+        <mxCell id="cli-main" value="Main  (entry point)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B85450;fontSize=11;fontStyle=1;align=left;spacingLeft=8;" vertex="1" parent="mod-cli">
+          <mxGeometry x="16" y="40" width="308" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="cli-jcc" value="JccCommand  (Picocli root)&#10;global flags — model, max-tokens, permission-mode, resume…" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B85450;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-cli">
+          <mxGeometry x="16" y="84" width="308" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="cli-prompt" value="PromptSubcommand  (one-shot)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B85450;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-cli">
+          <mxGeometry x="16" y="144" width="308" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="cli-repl" value="ReplSession  (JLine 3)&#10;interactive loop — slash + prompt dispatch" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B85450;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-cli">
+          <mxGeometry x="16" y="188" width="308" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="cli-env" value="RuntimeEnvironment&#10;wires ProviderClient · ToolExecutor · SessionStore · MCP · Permissions" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B85450;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-cli">
+          <mxGeometry x="16" y="248" width="308" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="cli-render" value="StreamingRenderer  «interface»" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B85450;fontSize=11;fontStyle=2;align=left;spacingLeft=8;" vertex="1" parent="mod-cli">
+          <mxGeometry x="16" y="316" width="308" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="cli-text" value="TextRenderer  (prose → stdout)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B85450;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-cli">
+          <mxGeometry x="16" y="360" width="308" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="cli-json" value="JsonRenderer  (NDJSON events)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B85450;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-cli">
+          <mxGeometry x="16" y="404" width="308" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="cli-rah" value="RenderingAssistantHandler" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B85450;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-cli">
+          <mxGeometry x="16" y="448" width="308" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="cli-bridge" value="StreamEventBridge · AssistantEvent" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B85450;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-cli">
+          <mxGeometry x="16" y="492" width="308" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="cli-alias" value="ModelAliases&#10;opus · sonnet · haiku → full model ids" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B85450;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-cli">
+          <mxGeometry x="16" y="536" width="308" height="44" as="geometry" />
+        </mxCell>
+
+        <!-- ========= external actors ========= -->
+        <mxCell id="mod-ext" value="External systems" style="swimlane;html=1;fontStyle=1;fontSize=13;fillColor=#F5F5F5;strokeColor=#666666;startSize=28;collapsible=0;horizontal=1;" vertex="1" parent="1">
+          <mxGeometry x="2160" y="80" width="400" height="880" as="geometry" />
+        </mxCell>
+        <mxCell id="ext-user" value="User / Terminal&#10;stdin · stdout · TTY" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#666666;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="mod-ext">
+          <mxGeometry x="20" y="44" width="360" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="ext-anthropic" value="Anthropic API&#10;https://api.anthropic.com/v1/messages  (SSE)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#666666;fontSize=11;" vertex="1" parent="mod-ext">
+          <mxGeometry x="20" y="108" width="360" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="ext-openai" value="OpenAI-compatible endpoint&#10;Ollama · xAI Grok · vLLM · LocalAI · LM Studio · OpenRouter&#10;/v1/chat/completions" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#666666;fontSize=11;" vertex="1" parent="mod-ext">
+          <mxGeometry x="20" y="176" width="360" height="68" as="geometry" />
+        </mxCell>
+        <mxCell id="ext-mcp" value="MCP servers  (stdio subprocesses)&#10;JSON-RPC over stdin / stdout" style="shape=process;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#666666;fontSize=11;" vertex="1" parent="mod-ext">
+          <mxGeometry x="20" y="260" width="360" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="ext-shell" value="POSIX shell  (/bin/sh -c)" style="shape=process;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#666666;fontSize=11;" vertex="1" parent="mod-ext">
+          <mxGeometry x="20" y="332" width="360" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="ext-fs" value="Local filesystem&#10;(read / write / glob / grep)" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#666666;fontSize=11;boundedLbl=1;backgroundOutline=1;size=15;" vertex="1" parent="mod-ext">
+          <mxGeometry x="20" y="388" width="360" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="ext-http" value="HTTP(S) endpoints  (web_fetch)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#666666;fontSize=11;" vertex="1" parent="mod-ext">
+          <mxGeometry x="20" y="460" width="360" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="ext-sessions" value="Session JSONL files&#10;~/.local/share/jcc/sessions/" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#666666;fontSize=11;boundedLbl=1;backgroundOutline=1;size=15;" vertex="1" parent="mod-ext">
+          <mxGeometry x="20" y="516" width="360" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="ext-settings" value="Config files&#10;~/.claude/settings.json · .jcc.json · .jcc/settings(.local).json" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#666666;fontSize=11;boundedLbl=1;backgroundOutline=1;size=15;" vertex="1" parent="mod-ext">
+          <mxGeometry x="20" y="588" width="360" height="56" as="geometry" />
+        </mxCell>
+
+        <!-- ========= module-level dependency arrows (dashed) ========= -->
+        <mxCell id="dep-cli-tools" style="endArrow=open;endSize=10;html=1;dashed=1;strokeWidth=2;strokeColor=#333333;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="mod-cli" target="mod-tools">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dep-cli-cmd" style="endArrow=open;endSize=10;html=1;dashed=1;strokeWidth=2;strokeColor=#333333;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="mod-cli" target="mod-commands">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dep-tools-rt" style="endArrow=open;endSize=10;html=1;dashed=1;strokeWidth=2;strokeColor=#333333;exitX=0;exitY=0.5;entryX=1;entryY=0.3;" edge="1" parent="1" source="mod-tools" target="mod-runtime">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dep-cmd-rt" style="endArrow=open;endSize=10;html=1;dashed=1;strokeWidth=2;strokeColor=#333333;exitX=0;exitY=0.5;entryX=1;entryY=0.7;" edge="1" parent="1" source="mod-commands" target="mod-runtime">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dep-rt-api" style="endArrow=open;endSize=10;html=1;dashed=1;strokeWidth=2;strokeColor=#333333;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="mod-runtime" target="mod-api">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dep-api-core" style="endArrow=open;endSize=10;html=1;dashed=1;strokeWidth=2;strokeColor=#333333;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="mod-api" target="mod-core">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ========= external integration arrows (solid) ========= -->
+        <mxCell id="int-user-repl" value="interactive" style="endArrow=classic;html=1;strokeColor=#444444;fontSize=10;exitX=0;exitY=0.4;entryX=1;entryY=0.5;" edge="1" parent="1" source="ext-user" target="cli-repl">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="int-user-prompt" value="one-shot" style="endArrow=classic;html=1;strokeColor=#444444;fontSize=10;exitX=0;exitY=0.6;entryX=1;entryY=0.5;" edge="1" parent="1" source="ext-user" target="cli-prompt">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="int-anth" value="HTTPS · SSE" style="endArrow=classic;html=1;strokeColor=#6C8EBF;strokeWidth=2;fontSize=10;" edge="1" parent="1" source="api-anthropic" target="ext-anthropic">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="int-oai" value="HTTPS · SSE" style="endArrow=classic;html=1;strokeColor=#6C8EBF;strokeWidth=2;fontSize=10;" edge="1" parent="1" source="api-openai" target="ext-openai">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="int-mcp" value="stdio · JSON-RPC" style="endArrow=classic;html=1;strokeColor=#82B366;strokeWidth=2;fontSize=10;" edge="1" parent="1" source="rt-mcp-cli" target="ext-mcp">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="int-bash" value="exec" style="endArrow=classic;html=1;strokeColor=#D79B00;strokeWidth=2;fontSize=10;" edge="1" parent="1" source="tl-bash" target="ext-shell">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="int-fs" value="read / write / glob / grep" style="endArrow=classic;html=1;strokeColor=#D79B00;strokeWidth=2;fontSize=10;exitX=1;exitY=0.5;entryX=0;entryY=0.3;" edge="1" parent="1" source="mod-tools" target="ext-fs">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="int-http" value="HTTP GET" style="endArrow=classic;html=1;strokeColor=#D79B00;strokeWidth=2;fontSize=10;" edge="1" parent="1" source="tl-fetch" target="ext-http">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="int-sess" value="append · rotate" style="endArrow=classic;html=1;strokeColor=#82B366;strokeWidth=2;fontSize=10;" edge="1" parent="1" source="rt-session" target="ext-sessions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="int-cfg" value="deep-merge 4 scopes" style="endArrow=classic;html=1;strokeColor=#82B366;strokeWidth=2;fontSize=10;" edge="1" parent="1" source="rt-config" target="ext-settings">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="int-agent-sub" value="spawn" style="endArrow=classic;html=1;strokeColor=#9673A6;strokeWidth=1;fontSize=10;dashed=1;" edge="1" parent="1" source="tl-agent" target="rt-sub-exec">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ========= legend ========= -->
+        <mxCell id="legend-box" value="Legend" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FAFAFA;strokeColor=#888888;fontSize=12;fontStyle=1;verticalAlign=top;align=left;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="40" y="970" width="980" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-dep" value="dashed → module-level compile dependency (transitive deps implied)" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="60" y="994" width="460" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-ext" value="solid → runtime integration with an external system" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="540" y="994" width="460" height="16" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
