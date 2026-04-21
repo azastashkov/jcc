@@ -1,6 +1,7 @@
 # jcc
 
 Java 21 reimplementation of the `claw-code` CLI agent harness. Scoped to MVP + MCP + REPL + multi-provider.
+Implemented for educational purposes only.
 
 ## Quick Start
 
