@@ -1,0 +1,579 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" agent="claude-code" version="24.0.0">
+
+  <!-- =========================================================
+       Diagram 1 — one-shot prompt end-to-end
+       ========================================================= -->
+  <diagram name="1. One-shot prompt" id="seq-1-prompt">
+    <mxGraphModel dx="1800" dy="950" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1760" pageHeight="920" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="t1" value="1 · One-shot prompt  —  jcc prompt [flags] &quot;…&quot;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=18;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="10" width="1680" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="t1s" value="PromptSubcommand.call → runPrompt → ConversationRuntime.runTurn  (tool loop, max 25 turns)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=11;fontStyle=2;fontColor=#555555;" vertex="1" parent="1">
+          <mxGeometry x="40" y="42" width="1680" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- lifelines -->
+        <mxCell id="p1-user" value="User" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#F5F5F5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="40" y="72" width="120" height="820" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-sub" value="PromptSubcommand&#10;«cli»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#F8CECC;strokeColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="200" y="72" width="180" height="820" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-cfg" value="ConfigLoader&#10;«runtime»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="420" y="72" width="170" height="820" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-ss" value="SessionStore&#10;«runtime»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="620" y="72" width="160" height="820" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-cr" value="ConversationRuntime&#10;«runtime»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="820" y="72" width="200" height="820" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-prov" value="ProviderClient&#10;«api»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="72" width="180" height="820" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-tools" value="ToolExecutor&#10;Builtin + MCP&#10;«runtime»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="72" width="200" height="820" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-rend" value="StreamingRenderer&#10;«cli»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#F8CECC;strokeColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="1520" y="72" width="200" height="820" as="geometry"/>
+        </mxCell>
+
+        <!-- loop frame around turn -->
+        <mxCell id="p1-loop" value="loop  [per turn · max 25 · while stop_reason = tool_use]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#6C8EBF;fontSize=11;fontStyle=2;align=left;verticalAlign=top;spacingLeft=8;spacingTop=2;dashed=0;" vertex="1" parent="1">
+          <mxGeometry x="820" y="420" width="860" height="290" as="geometry"/>
+        </mxCell>
+
+        <!-- messages -->
+        <mxCell id="m1-01" value="jcc prompt [--resume latest] &quot;…&quot;" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="100" y="120" as="sourcePoint"/><mxPoint x="290" y="120" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m1-02" value="load(workingDir)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="290" y="160" as="sourcePoint"/><mxPoint x="505" y="160" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m1-03" value="RuntimeConfig  (4-scope deep merge)" style="endArrow=open;html=1;fontSize=11;strokeColor=#888888;dashed=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="505" y="200" as="sourcePoint"/><mxPoint x="290" y="200" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m1-04" value="createNew  |  load(resume)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="290" y="240" as="sourcePoint"/><mxPoint x="700" y="240" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m1-05" value="Session  (JSONL-backed, 256 KB rotation)" style="endArrow=open;html=1;fontSize=11;strokeColor=#888888;dashed=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="700" y="280" as="sourcePoint"/><mxPoint x="290" y="280" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m1-06" value="new(provider, tools, permissions, model, maxTokens, system)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="290" y="320" as="sourcePoint"/><mxPoint x="920" y="320" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m1-07" value="addHistory(msg)  [replay if --resume]" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="290" y="360" as="sourcePoint"/><mxPoint x="920" y="360" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m1-08" value="runTurn(prompt, handler)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="290" y="400" as="sourcePoint"/><mxPoint x="920" y="400" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m1-09" value="stream(MessageRequest, TurnAssembler)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="920" y="460" as="sourcePoint"/><mxPoint x="1150" y="460" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m1-10" value="onTextDelta · onToolResult · onUsage  (SSE)" style="endArrow=open;html=1;fontSize=11;strokeColor=#6C8EBF;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1150" y="500" as="sourcePoint"/><mxPoint x="1620" y="500" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m1-11" value="assembled blocks · usage · stop_reason" style="endArrow=open;html=1;fontSize=11;strokeColor=#888888;dashed=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1150" y="540" as="sourcePoint"/><mxPoint x="920" y="540" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m1-12" value="alt  [tool_use blocks present]  ·  per block:  execute(name, input, ctx)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="920" y="590" as="sourcePoint"/><mxPoint x="1380" y="590" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m1-13" value="Result&lt;ToolOutput, ToolError&gt;" style="endArrow=open;html=1;fontSize=11;strokeColor=#888888;dashed=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1380" y="630" as="sourcePoint"/><mxPoint x="920" y="630" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m1-14" value="history += tool_result block  (else: break loop)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="920" y="670" as="sourcePoint"/>
+            <mxPoint x="920" y="695" as="targetPoint"/>
+            <Array as="points"><mxPoint x="995" y="670"/><mxPoint x="995" y="695"/></Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m1-15" value="TurnSummary(text, usage, stop_reason, turns)" style="endArrow=open;html=1;fontSize=11;strokeColor=#888888;dashed=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="920" y="730" as="sourcePoint"/><mxPoint x="290" y="730" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m1-16" value="append new messages → .jsonl  (rotate at 256 KB, 3 rotated max)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#82B366;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="290" y="770" as="sourcePoint"/><mxPoint x="700" y="770" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m1-17" value="exit code (0 ok, 1 runtime, 2 config)" style="endArrow=open;html=1;fontSize=11;strokeColor=#888888;dashed=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="290" y="810" as="sourcePoint"/><mxPoint x="100" y="810" as="targetPoint"/></mxGeometry>
+        </mxCell>
+
+        <!-- side note -->
+        <mxCell id="n1-prov" value="Provider chosen by env:&#10;OPENAI_BASE_URL → OpenAiCompat&#10;else ANTHROPIC_API_KEY → Anthropic" style="shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="320" width="220" height="60" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <!-- =========================================================
+       Diagram 2 — REPL turn + slash command dispatch
+       ========================================================= -->
+  <diagram name="2. REPL + slash dispatch" id="seq-2-repl">
+    <mxGraphModel dx="1600" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1540" pageHeight="860" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="t2" value="2 · Interactive REPL loop  —  slash commands vs free-text prompt" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=18;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="10" width="1460" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="t2s" value="ReplSession.run — JLine 3 line reader · SlashCommandRegistry dispatch · ConversationRuntime.runTurn for free text" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=11;fontStyle=2;fontColor=#555555;" vertex="1" parent="1">
+          <mxGeometry x="40" y="42" width="1460" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- lifelines -->
+        <mxCell id="p2-user" value="User" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#F5F5F5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="40" y="72" width="120" height="760" as="geometry"/>
+        </mxCell>
+        <mxCell id="p2-main" value="Main / JccCommand&#10;«cli»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#F8CECC;strokeColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="200" y="72" width="180" height="760" as="geometry"/>
+        </mxCell>
+        <mxCell id="p2-env" value="RuntimeEnvironment&#10;«cli»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#F8CECC;strokeColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="420" y="72" width="180" height="760" as="geometry"/>
+        </mxCell>
+        <mxCell id="p2-repl" value="ReplSession&#10;«cli»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#F8CECC;strokeColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="640" y="72" width="160" height="760" as="geometry"/>
+        </mxCell>
+        <mxCell id="p2-reg" value="SlashCommandRegistry&#10;«commands»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;" vertex="1" parent="1">
+          <mxGeometry x="840" y="72" width="200" height="760" as="geometry"/>
+        </mxCell>
+        <mxCell id="p2-cmd" value="SlashCommand&#10;/help /status /cost /clear…&#10;«commands»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=50;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="72" width="220" height="760" as="geometry"/>
+        </mxCell>
+        <mxCell id="p2-cr" value="ConversationRuntime&#10;«runtime»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="1340" y="72" width="180" height="760" as="geometry"/>
+        </mxCell>
+
+        <!-- loop frame + alt -->
+        <mxCell id="p2-loop" value="loop  [read line until EOF or /exit]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#6C8EBF;fontSize=11;fontStyle=2;align=left;verticalAlign=top;spacingLeft=8;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="640" y="260" width="880" height="520" as="geometry"/>
+        </mxCell>
+        <mxCell id="p2-alt" value="alt  [line starts with '/' ]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#9673A6;fontSize=11;fontStyle=2;align=left;verticalAlign=top;spacingLeft=8;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="840" y="330" width="680" height="210" as="geometry"/>
+        </mxCell>
+        <mxCell id="p2-else" value="else  [free-text prompt → agent turn]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#82B366;fontSize=11;fontStyle=2;align=left;verticalAlign=top;spacingLeft=8;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="640" y="560" width="880" height="210" as="geometry"/>
+        </mxCell>
+
+        <!-- messages -->
+        <mxCell id="m2-01" value="jcc  (no subcommand)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="100" y="120" as="sourcePoint"/><mxPoint x="290" y="120" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m2-02" value="bootstrap(config, providers, MCP, session)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="290" y="160" as="sourcePoint"/><mxPoint x="510" y="160" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m2-03" value="new ReplSession(env, registry, out).run()" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="290" y="200" as="sourcePoint"/><mxPoint x="720" y="200" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m2-04" value="print banner + Session:…" style="endArrow=open;html=1;fontSize=11;strokeColor=#888888;dashed=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="720" y="240" as="sourcePoint"/><mxPoint x="100" y="240" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m2-05" value="readLine(&quot;jcc&gt; &quot;)  (JLine 3)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="100" y="290" as="sourcePoint"/><mxPoint x="720" y="290" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <!-- alt 1: slash -->
+        <mxCell id="m2-06" value="dispatch(line, SlashContext)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="720" y="360" as="sourcePoint"/><mxPoint x="940" y="360" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m2-07" value="execute(args, ctx)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="940" y="400" as="sourcePoint"/><mxPoint x="1190" y="400" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m2-08" value="write result (e.g. model/session/cost JSON) to ctx.out" style="endArrow=open;html=1;fontSize=11;strokeColor=#9673A6;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1190" y="440" as="sourcePoint"/><mxPoint x="100" y="440" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m2-09" value="SlashCommandResult  (Ok | Exit | Unknown)" style="endArrow=open;html=1;fontSize=11;strokeColor=#888888;dashed=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1190" y="480" as="sourcePoint"/><mxPoint x="720" y="480" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m2-10" value="if Exit → break loop    ·    if Unknown → print hint" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="720" y="515" as="sourcePoint"/>
+            <mxPoint x="720" y="515" as="targetPoint"/>
+            <Array as="points"><mxPoint x="780" y="515"/><mxPoint x="780" y="525"/><mxPoint x="720" y="525"/></Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- alt 2: free text -->
+        <mxCell id="m2-11" value="runTurn(line, renderer-backed handler)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="720" y="600" as="sourcePoint"/><mxPoint x="1430" y="600" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m2-12" value="(inner tool loop — see Diagram 1)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#82B366;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1430" y="640" as="sourcePoint"/>
+            <mxPoint x="1430" y="665" as="targetPoint"/>
+            <Array as="points"><mxPoint x="1495" y="640"/><mxPoint x="1495" y="665"/></Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m2-13" value="stream text deltas + usage → stdout" style="endArrow=open;html=1;fontSize=11;strokeColor=#6C8EBF;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1430" y="695" as="sourcePoint"/><mxPoint x="100" y="695" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m2-14" value="TurnSummary" style="endArrow=open;html=1;fontSize=11;strokeColor=#888888;dashed=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1430" y="730" as="sourcePoint"/><mxPoint x="720" y="730" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m2-15" value="env.persistNewHistory(before)  → Session.append" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="720" y="760" as="sourcePoint"/><mxPoint x="510" y="760" as="targetPoint"/></mxGeometry>
+        </mxCell>
+
+        <!-- side note -->
+        <mxCell id="n2" value="SlashContext exposes:&#10;  conversation, config, session,&#10;  usageSupplier, clearHistory, out.&#10;Commands either mutate these&#10;or print to ctx.out — never&#10;talk to the provider directly." style="shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="1">
+          <mxGeometry x="180" y="500" width="220" height="110" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <!-- =========================================================
+       Diagram 3 — tool call with permission gate
+       ========================================================= -->
+  <diagram name="3. Tool call + permission" id="seq-3-tool">
+    <mxGraphModel dx="1800" dy="950" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1760" pageHeight="920" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="t3" value="3 · Tool execution  —  permission gate  →  builtin/MCP tool  →  tool_result" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=18;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="10" width="1680" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="t3s" value="ConversationRuntime.runToolCall — PermissionPolicy (5 modes) · PermissionPrompter · CompositeToolExecutor · BuiltinTool" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=11;fontStyle=2;fontColor=#555555;" vertex="1" parent="1">
+          <mxGeometry x="40" y="42" width="1680" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- lifelines -->
+        <mxCell id="p3-prov" value="ProviderClient&#10;«api»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;" vertex="1" parent="1">
+          <mxGeometry x="40" y="72" width="160" height="820" as="geometry"/>
+        </mxCell>
+        <mxCell id="p3-cr" value="ConversationRuntime&#10;«runtime»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="240" y="72" width="200" height="820" as="geometry"/>
+        </mxCell>
+        <mxCell id="p3-perm" value="PermissionPolicy&#10;«runtime»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="480" y="72" width="170" height="820" as="geometry"/>
+        </mxCell>
+        <mxCell id="p3-pr" value="PermissionPrompter&#10;«runtime»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="690" y="72" width="180" height="820" as="geometry"/>
+        </mxCell>
+        <mxCell id="p3-u" value="User&#10;(prompt mode)" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#F5F5F5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="910" y="72" width="140" height="820" as="geometry"/>
+        </mxCell>
+        <mxCell id="p3-tx" value="ToolExecutor&#10;Composite(Builtin+MCP)&#10;«runtime»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=50;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="1090" y="72" width="220" height="820" as="geometry"/>
+        </mxCell>
+        <mxCell id="p3-tool" value="BuiltinTool&#10;(e.g. BashTool)&#10;«tools»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=50;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;" vertex="1" parent="1">
+          <mxGeometry x="1350" y="72" width="180" height="820" as="geometry"/>
+        </mxCell>
+        <mxCell id="p3-ext" value="External&#10;shell · FS · HTTP" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#F5F5F5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="1570" y="72" width="160" height="820" as="geometry"/>
+        </mxCell>
+
+        <!-- alt frames -->
+        <mxCell id="p3-altprompt" value="opt  [mode = prompt · not in allow/deny lists]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#9673A6;fontSize=11;fontStyle=2;align=left;verticalAlign=top;spacingLeft=8;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="480" y="210" width="580" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="p3-altoutcome" value="alt  [outcome = Deny]              /              else  [outcome = Allow]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#B85450;fontSize=11;fontStyle=2;align=left;verticalAlign=top;spacingLeft=8;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="240" y="470" width="1490" height="360" as="geometry"/>
+        </mxCell>
+
+        <!-- messages -->
+        <mxCell id="m3-01" value="ContentBlock.ToolUse { id, name, input }" style="endArrow=open;html=1;fontSize=11;strokeColor=#6C8EBF;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="120" y="130" as="sourcePoint"/><mxPoint x="340" y="130" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m3-02" value="evaluate(name, inputSummary, prompter)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="340" y="170" as="sourcePoint"/><mxPoint x="565" y="170" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <!-- prompt opt branch -->
+        <mxCell id="m3-03" value="prompt(PermissionRequest)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="565" y="240" as="sourcePoint"/><mxPoint x="780" y="240" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m3-04" value="render: &quot;Allow tool X with args …?&quot;" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="780" y="280" as="sourcePoint"/><mxPoint x="980" y="280" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m3-05" value="y / n / always-allow" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="980" y="320" as="sourcePoint"/><mxPoint x="780" y="320" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m3-06" value="PermissionPromptDecision" style="endArrow=open;html=1;fontSize=11;strokeColor=#888888;dashed=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="780" y="360" as="sourcePoint"/><mxPoint x="565" y="360" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m3-07" value="PermissionOutcome  (Allow | Deny{reason})" style="endArrow=open;html=1;fontSize=11;strokeColor=#888888;dashed=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="565" y="440" as="sourcePoint"/><mxPoint x="340" y="440" as="targetPoint"/></mxGeometry>
+        </mxCell>
+
+        <!-- Deny branch -->
+        <mxCell id="m3-08" value="build is_error=true ToolResult &quot;Permission denied: …&quot;" style="endArrow=classic;html=1;fontSize=11;strokeColor=#B85450;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="340" y="500" as="sourcePoint"/>
+            <mxPoint x="340" y="525" as="targetPoint"/>
+            <Array as="points"><mxPoint x="420" y="500"/><mxPoint x="420" y="525"/></Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Allow branch -->
+        <mxCell id="m3-09" value="execute(name, input, ToolContext)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="340" y="570" as="sourcePoint"/><mxPoint x="1200" y="570" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m3-10" value="run(input, ctx)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1200" y="610" as="sourcePoint"/><mxPoint x="1440" y="610" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m3-11" value="read / write / exec (/bin/sh) / HTTP GET" style="endArrow=classic;html=1;fontSize=11;strokeColor=#D79B00;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1440" y="650" as="sourcePoint"/><mxPoint x="1650" y="650" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m3-12" value="bytes / exit code" style="endArrow=open;html=1;fontSize=11;strokeColor=#888888;dashed=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1650" y="690" as="sourcePoint"/><mxPoint x="1440" y="690" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m3-13" value="Result.Ok(ToolOutput)  |  Result.Err(ToolError)" style="endArrow=open;html=1;fontSize=11;strokeColor=#888888;dashed=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1440" y="730" as="sourcePoint"/><mxPoint x="1200" y="730" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m3-14" value="Result  (MCP tools routed through McpServerManager)" style="endArrow=open;html=1;fontSize=11;strokeColor=#888888;dashed=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1200" y="770" as="sourcePoint"/><mxPoint x="340" y="770" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m3-15" value="next turn: user message w/ tool_result block" style="endArrow=classic;html=1;fontSize=11;strokeColor=#6C8EBF;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="340" y="810" as="sourcePoint"/><mxPoint x="120" y="810" as="targetPoint"/></mxGeometry>
+        </mxCell>
+
+        <!-- notes -->
+        <mxCell id="n3-modes" value="Modes:&#10; read-only · workspace-write&#10; danger-full-access · prompt · allow&#10;Plus allow/deny/ask arrays (additive&#10;across the 4 config scopes)." style="shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="1">
+          <mxGeometry x="480" y="110" width="230" height="85" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <!-- =========================================================
+       Diagram 4 — MCP server lifecycle + tool call
+       ========================================================= -->
+  <diagram name="4. MCP lifecycle" id="seq-4-mcp">
+    <mxGraphModel dx="1700" dy="1050" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1020" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="t4" value="4 · MCP server lifecycle  —  spawn → initialize → list_tools → call_tool" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=18;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="10" width="1520" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="t4s" value="McpServerManager · McpStdioClient · JSON-RPC over stdin/stdout  (protocolVersion 2024-11-05)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=11;fontStyle=2;fontColor=#555555;" vertex="1" parent="1">
+          <mxGeometry x="40" y="42" width="1520" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- lifelines -->
+        <mxCell id="p4-env" value="RuntimeEnvironment&#10;«cli»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#F8CECC;strokeColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="40" y="72" width="180" height="920" as="geometry"/>
+        </mxCell>
+        <mxCell id="p4-cfg" value="ConfigLoader&#10;«runtime»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="260" y="72" width="160" height="920" as="geometry"/>
+        </mxCell>
+        <mxCell id="p4-mgr" value="McpServerManager&#10;«runtime»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="460" y="72" width="180" height="920" as="geometry"/>
+        </mxCell>
+        <mxCell id="p4-cli" value="McpStdioClient&#10;«runtime»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="680" y="72" width="180" height="920" as="geometry"/>
+        </mxCell>
+        <mxCell id="p4-proc" value="MCP subprocess&#10;(stdio)" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#F5F5F5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="900" y="72" width="180" height="920" as="geometry"/>
+        </mxCell>
+        <mxCell id="p4-ce" value="CompositeToolExecutor&#10;«runtime»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="72" width="200" height="920" as="geometry"/>
+        </mxCell>
+        <mxCell id="p4-cr" value="ConversationRuntime&#10;«runtime»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="1360" y="72" width="200" height="920" as="geometry"/>
+        </mxCell>
+
+        <!-- per-server loop frame -->
+        <mxCell id="p4-loop" value="loop  [per configured MCP server in RuntimeConfig.mcp]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#6C8EBF;fontSize=11;fontStyle=2;align=left;verticalAlign=top;spacingLeft=8;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="460" y="230" width="620" height="440" as="geometry"/>
+        </mxCell>
+
+        <!-- messages: bootstrap -->
+        <mxCell id="m4-01" value="load(workingDir)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="130" y="130" as="sourcePoint"/><mxPoint x="340" y="130" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m4-02" value="RuntimeConfig { mcp: {name → McpServerConfig} }" style="endArrow=open;html=1;fontSize=11;strokeColor=#888888;dashed=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="340" y="170" as="sourcePoint"/><mxPoint x="130" y="170" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m4-03" value="start(serverConfigs)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="130" y="210" as="sourcePoint"/><mxPoint x="550" y="210" as="targetPoint"/></mxGeometry>
+        </mxCell>
+
+        <!-- lifecycle loop -->
+        <mxCell id="m4-04" value="spawn(name, config, executor)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="550" y="260" as="sourcePoint"/><mxPoint x="770" y="260" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m4-05" value="ProcessBuilder.start()" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="770" y="295" as="sourcePoint"/><mxPoint x="990" y="295" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m4-06" value="startReaders()  (virtual threads drain stdout + stderr)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#82B366;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="770" y="330" as="sourcePoint"/>
+            <mxPoint x="770" y="355" as="targetPoint"/>
+            <Array as="points"><mxPoint x="835" y="330"/><mxPoint x="835" y="355"/></Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m4-07" value="initialize()  (timeout 10 s)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="550" y="390" as="sourcePoint"/><mxPoint x="770" y="390" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m4-08" value="JSON-RPC  initialize { protocolVersion, clientInfo }" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="770" y="425" as="sourcePoint"/><mxPoint x="990" y="425" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m4-09" value="result { protocolVersion, capabilities }" style="endArrow=open;html=1;fontSize=11;strokeColor=#888888;dashed=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="990" y="460" as="sourcePoint"/><mxPoint x="770" y="460" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m4-10" value="notifications/initialized  (fire-and-forget)" style="endArrow=open;html=1;fontSize=11;strokeColor=#D79B00;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="770" y="495" as="sourcePoint"/><mxPoint x="990" y="495" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m4-11" value="listTools()  (timeout 30 s)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="550" y="535" as="sourcePoint"/><mxPoint x="770" y="535" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m4-12" value="JSON-RPC  tools/list" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="770" y="570" as="sourcePoint"/><mxPoint x="990" y="570" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m4-13" value="tools[]" style="endArrow=open;html=1;fontSize=11;strokeColor=#888888;dashed=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="990" y="605" as="sourcePoint"/><mxPoint x="770" y="605" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m4-14" value="register as mcp__&lt;server&gt;__&lt;tool&gt;" style="endArrow=classic;html=1;fontSize=11;strokeColor=#82B366;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="550" y="640" as="sourcePoint"/>
+            <mxPoint x="550" y="655" as="targetPoint"/>
+            <Array as="points"><mxPoint x="625" y="640"/><mxPoint x="625" y="655"/></Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- composite wiring + later call -->
+        <mxCell id="m4-15" value="compose(Builtin + MCP-backed adapters)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="130" y="700" as="sourcePoint"/><mxPoint x="1220" y="700" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m4-16" value="(later)  execute(mcp__server__tool, args, ctx)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#6C8EBF;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1460" y="750" as="sourcePoint"/><mxPoint x="1220" y="750" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m4-17" value="callTool(name, args)  (timeout 120 s)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1220" y="790" as="sourcePoint"/><mxPoint x="770" y="790" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m4-18" value="JSON-RPC  tools/call { name, arguments }" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="770" y="830" as="sourcePoint"/><mxPoint x="990" y="830" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m4-19" value="result (or error → McpTransportException)" style="endArrow=open;html=1;fontSize=11;strokeColor=#888888;dashed=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="990" y="870" as="sourcePoint"/><mxPoint x="770" y="870" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m4-20" value="Result&lt;ToolOutput, ToolError&gt;" style="endArrow=open;html=1;fontSize=11;strokeColor=#888888;dashed=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="770" y="910" as="sourcePoint"/><mxPoint x="1460" y="910" as="targetPoint"/></mxGeometry>
+        </mxCell>
+
+        <!-- note -->
+        <mxCell id="n4" value="writeLock + ConcurrentHashMap&lt;id, CompletableFuture&gt;&#10;pair stdin writes with async stdout responses.&#10;stderr is drained into SLF4J at DEBUG.&#10;Shutdown: stdin.close + waitFor(5s) + destroyForcibly." style="shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="225" width="460" height="70" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <!-- =========================================================
+       Diagram 5 — sub-agent delegation via AgentTool
+       ========================================================= -->
+  <diagram name="5. Sub-agent delegation" id="seq-5-subagent">
+    <mxGraphModel dx="1900" dy="950" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1840" pageHeight="920" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="t5" value="5 · Sub-agent delegation  —  AgentTool  →  SubagentExecutor  →  child ConversationRuntime" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=18;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="10" width="1760" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="t5s" value="Parent issues tool_use {name: Agent} · child runs with FilteringToolExecutor (per-type allowlist) and a system prompt" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=11;fontStyle=2;fontColor=#555555;" vertex="1" parent="1">
+          <mxGeometry x="40" y="42" width="1760" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- lifelines -->
+        <mxCell id="p5-prov" value="ProviderClient&#10;(parent stream)&#10;«api»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=50;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;" vertex="1" parent="1">
+          <mxGeometry x="40" y="72" width="160" height="820" as="geometry"/>
+        </mxCell>
+        <mxCell id="p5-parent" value="Parent&#10;ConversationRuntime&#10;«runtime»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=50;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="240" y="72" width="200" height="820" as="geometry"/>
+        </mxCell>
+        <mxCell id="p5-agent" value="AgentTool&#10;«tools»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;" vertex="1" parent="1">
+          <mxGeometry x="480" y="72" width="160" height="820" as="geometry"/>
+        </mxCell>
+        <mxCell id="p5-se" value="SubagentExecutor&#10;«runtime»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="680" y="72" width="180" height="820" as="geometry"/>
+        </mxCell>
+        <mxCell id="p5-allow" value="SubagentToolAllowlist&#10;«runtime»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="900" y="72" width="200" height="820" as="geometry"/>
+        </mxCell>
+        <mxCell id="p5-tr" value="TaskRegistry&#10;«runtime»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="1140" y="72" width="170" height="820" as="geometry"/>
+        </mxCell>
+        <mxCell id="p5-ftool" value="FilteringToolExecutor&#10;«runtime»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=40;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="1350" y="72" width="200" height="820" as="geometry"/>
+        </mxCell>
+        <mxCell id="p5-child" value="Child&#10;ConversationRuntime&#10;«runtime»" style="shape=umlLifeline;perimeter=lifelinePerimeter;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;fontSize=12;fontStyle=1;size=50;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="1590" y="72" width="200" height="820" as="geometry"/>
+        </mxCell>
+
+        <!-- messages -->
+        <mxCell id="m5-01" value="tool_use { name: Agent, input: { description, prompt, subagent_type, model? } }" style="endArrow=open;html=1;fontSize=11;strokeColor=#6C8EBF;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="120" y="140" as="sourcePoint"/><mxPoint x="340" y="140" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m5-02" value="execute(&quot;Agent&quot;, input, ctx)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="340" y="180" as="sourcePoint"/><mxPoint x="560" y="180" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m5-03" value="run(description, prompt, type, modelOverride)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="560" y="220" as="sourcePoint"/><mxPoint x="770" y="220" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m5-04" value="allowedTools(subagent_type)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="770" y="260" as="sourcePoint"/><mxPoint x="1000" y="260" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m5-05" value="Set&lt;String&gt;  (e.g. {read_file, glob, grep})" style="endArrow=open;html=1;fontSize=11;strokeColor=#888888;dashed=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1000" y="300" as="sourcePoint"/><mxPoint x="770" y="300" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m5-06" value="new FilteringToolExecutor(parentTools, allowed)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="770" y="340" as="sourcePoint"/><mxPoint x="1450" y="340" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m5-07" value="createTask(description, type)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="770" y="380" as="sourcePoint"/><mxPoint x="1225" y="380" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m5-08" value="TaskRecord { taskId, status: PENDING }" style="endArrow=open;html=1;fontSize=11;strokeColor=#888888;dashed=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1225" y="420" as="sourcePoint"/><mxPoint x="770" y="420" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m5-09" value="transition(taskId, RUNNING, current thread)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="770" y="460" as="sourcePoint"/><mxPoint x="1225" y="460" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m5-10" value="new ConversationRuntime(provider, filtered, perms, …, systemPrompt)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="770" y="500" as="sourcePoint"/><mxPoint x="1690" y="500" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m5-11" value="runTurn(prompt, AssistantEventHandler.NOOP)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="770" y="540" as="sourcePoint"/><mxPoint x="1690" y="540" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m5-12" value="(inner tool loop — see Diagram 1, filtered tool surface)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#6C8EBF;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1690" y="580" as="sourcePoint"/>
+            <mxPoint x="1690" y="605" as="targetPoint"/>
+            <Array as="points"><mxPoint x="1760" y="580"/><mxPoint x="1760" y="605"/></Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m5-13" value="TurnSummary  (finalText, usage, stop_reason)" style="endArrow=open;html=1;fontSize=11;strokeColor=#888888;dashed=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1690" y="640" as="sourcePoint"/><mxPoint x="770" y="640" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m5-14" value="transition(taskId, COMPLETED, finalText)   |   FAILED on RuntimeException" style="endArrow=classic;html=1;fontSize=11;strokeColor=#333333;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="770" y="680" as="sourcePoint"/><mxPoint x="1225" y="680" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m5-15" value="SubagentResult { finalText, usage, status, taskId }" style="endArrow=open;html=1;fontSize=11;strokeColor=#888888;dashed=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="770" y="720" as="sourcePoint"/><mxPoint x="560" y="720" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m5-16" value="Result.Ok(ToolOutput(finalText))" style="endArrow=open;html=1;fontSize=11;strokeColor=#888888;dashed=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="560" y="760" as="sourcePoint"/><mxPoint x="340" y="760" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        <mxCell id="m5-17" value="next turn: user msg with tool_result block  (→ parent model continues)" style="endArrow=classic;html=1;fontSize=11;strokeColor=#6C8EBF;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="340" y="800" as="sourcePoint"/><mxPoint x="120" y="800" as="targetPoint"/></mxGeometry>
+        </mxCell>
+
+        <!-- note -->
+        <mxCell id="n5" value="System prompt (hard-coded):&#10;&quot;You are a background sub-agent of type `…`.&#10; Work only on the delegated task, use only&#10; the tools available to you, do not ask the&#10; user questions, and finish with a concise&#10; result.&quot;" style="shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="1">
+          <mxGeometry x="680" y="110" width="440" height="85" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+</mxfile>
