@@ -17,6 +17,8 @@ import io.jcc.runtime.Session;
 import io.jcc.runtime.SessionStore;
 import io.jcc.runtime.ToolContext;
 import io.jcc.tools.BuiltinToolRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -31,6 +33,8 @@ import java.util.concurrent.Callable;
 
 @Command(name = "prompt", description = "Send a one-shot prompt and stream the response.")
 public final class PromptSubcommand implements Callable<Integer> {
+
+    private static final Logger log = LoggerFactory.getLogger(PromptSubcommand.class);
 
     @Option(names = "--model", description = "Model name or alias (opus, sonnet, haiku).")
     String model;
@@ -60,7 +64,7 @@ public final class PromptSubcommand implements Callable<Integer> {
         try {
             client = selectProvider();
         } catch (IllegalStateException e) {
-            System.err.println(e.getMessage());
+            log.error("{}", e.getMessage());
             return 2;
         }
         return runPrompt(client, System.out, SessionStore.defaultStore());
@@ -85,7 +89,7 @@ public final class PromptSubcommand implements Callable<Integer> {
             case "text" -> new TextRenderer(out);
             case "json" -> new JsonRenderer(out);
             default -> {
-                System.err.println("Unsupported --output-format: " + outputFormat);
+                log.error("Unsupported --output-format: {}", outputFormat);
                 yield null;
             }
         };
@@ -109,7 +113,7 @@ public final class PromptSubcommand implements Callable<Integer> {
                 PermissionMode.WORKSPACE_WRITE.cliName());
             mode = PermissionMode.fromCliName(modeName);
         } catch (IllegalArgumentException e) {
-            System.err.println(e.getMessage());
+            log.error("{}", e.getMessage());
             return 2;
         }
 
@@ -136,7 +140,7 @@ public final class PromptSubcommand implements Callable<Integer> {
         try (StreamingRenderer r = renderer) {
             conversation.runTurn(prompt, handler);
         } catch (RuntimeException e) {
-            System.err.println("Request failed: " + e.getMessage());
+            log.error("Request failed: {}", e.getMessage(), e);
             return 1;
         }
 

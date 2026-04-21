@@ -2,6 +2,8 @@ package io.jcc.cli;
 
 import io.jcc.commands.SlashCommandRegistry;
 import io.jcc.runtime.SessionStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
@@ -15,6 +17,8 @@ import java.util.concurrent.Callable;
     subcommands = { PromptSubcommand.class }
 )
 public final class JccCommand implements Callable<Integer> {
+
+    private static final Logger log = LoggerFactory.getLogger(JccCommand.class);
 
     @Option(names = "--model", description = "Model name or alias (opus, sonnet, haiku).")
     String model;
@@ -36,7 +40,7 @@ public final class JccCommand implements Callable<Integer> {
                 new RuntimeEnvironment.Options(model, maxTokens, permissionMode, resume),
                 SessionStore.defaultStore());
         } catch (IllegalStateException e) {
-            System.err.println(e.getMessage());
+            log.error("{}", e.getMessage());
             return 2;
         }
         return new ReplSession(env, SlashCommandRegistry.defaults(), System.out).run();

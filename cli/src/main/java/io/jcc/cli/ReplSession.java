@@ -12,12 +12,15 @@ import org.jline.reader.UserInterruptException;
 import org.jline.reader.impl.completer.StringsCompleter;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Path;
 
 public final class ReplSession {
+    private static final Logger log = LoggerFactory.getLogger(ReplSession.class);
 
     private final RuntimeEnvironment env;
     private final SlashCommandRegistry slashRegistry;
@@ -70,7 +73,7 @@ public final class ReplSession {
             }
             return 0;
         } catch (IOException e) {
-            System.err.println("REPL initialization failed: " + e.getMessage());
+            log.error("REPL initialization failed: {}", e.getMessage(), e);
             return 1;
         }
     }
