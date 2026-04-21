@@ -13,7 +13,7 @@ import java.util.List;
 
 public final class ConversationRuntime {
 
-    private static final int MAX_TURNS = 25;
+    private static final int MAX_TURNS = 100;
 
     private final ProviderClient provider;
     private final ToolExecutor toolExecutor;
