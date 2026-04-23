@@ -14,7 +14,7 @@ class TextRendererTest {
     @Test
     void toolUseAndResultAreVisible() {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        try (TextRenderer r = new TextRenderer(new PrintStream(buf, true, StandardCharsets.UTF_8))) {
+        try (TextRenderer r = new TextRenderer(new PrintStream(buf, true, StandardCharsets.UTF_8), Style.PLAIN)) {
             r.onEvent(new AssistantEvent.ToolUseRequested(
                 "tu_1", "write_file", "{\"path\":\"/tmp/x\",\"content\":\"hi\"}"));
             r.onEvent(new AssistantEvent.ToolResult(
@@ -33,7 +33,7 @@ class TextRendererTest {
     @Test
     void toolResultErrorIsMarkedDistinctly() {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        try (TextRenderer r = new TextRenderer(new PrintStream(buf, true, StandardCharsets.UTF_8))) {
+        try (TextRenderer r = new TextRenderer(new PrintStream(buf, true, StandardCharsets.UTF_8), Style.PLAIN)) {
             r.onEvent(new AssistantEvent.ToolUseRequested("tu_1", "bash", "{\"command\":\"false\"}"));
             r.onEvent(new AssistantEvent.ToolResult("tu_1", "bash", "exit 1: command failed", true));
             r.onEvent(new AssistantEvent.TurnFinish("end_turn"));
@@ -48,7 +48,7 @@ class TextRendererTest {
     @Test
     void nonEndTurnStopReasonIsVisible() {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        try (TextRenderer r = new TextRenderer(new PrintStream(buf, true, StandardCharsets.UTF_8))) {
+        try (TextRenderer r = new TextRenderer(new PrintStream(buf, true, StandardCharsets.UTF_8), Style.PLAIN)) {
             r.onEvent(new AssistantEvent.TextDelta("Now I'll write the test."));
             r.onEvent(new AssistantEvent.UsageReport(new Usage(0, 0, 0, 1024)));
             r.onEvent(new AssistantEvent.TurnFinish("max_tokens"));
@@ -61,7 +61,7 @@ class TextRendererTest {
     @Test
     void endTurnStopReasonIsSilent() {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        try (TextRenderer r = new TextRenderer(new PrintStream(buf, true, StandardCharsets.UTF_8))) {
+        try (TextRenderer r = new TextRenderer(new PrintStream(buf, true, StandardCharsets.UTF_8), Style.PLAIN)) {
             r.onEvent(new AssistantEvent.TextDelta("All done."));
             r.onEvent(new AssistantEvent.TurnFinish("end_turn"));
         }
@@ -74,7 +74,7 @@ class TextRendererTest {
     @Test
     void usageReportPrintsCumulativeSnapshot() {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        try (TextRenderer r = new TextRenderer(new PrintStream(buf, true, StandardCharsets.UTF_8))) {
+        try (TextRenderer r = new TextRenderer(new PrintStream(buf, true, StandardCharsets.UTF_8), Style.PLAIN)) {
             r.onEvent(new AssistantEvent.UsageReport(new Usage(100, 0, 0, 50)));
             r.onEvent(new AssistantEvent.TurnFinish("end_turn"));
         }
@@ -85,7 +85,7 @@ class TextRendererTest {
     @Test
     void duplicateUsageReportsAreSuppressed() {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        try (TextRenderer r = new TextRenderer(new PrintStream(buf, true, StandardCharsets.UTF_8))) {
+        try (TextRenderer r = new TextRenderer(new PrintStream(buf, true, StandardCharsets.UTF_8), Style.PLAIN)) {
             r.onEvent(new AssistantEvent.UsageReport(new Usage(50, 0, 0, 25)));
             r.onEvent(new AssistantEvent.UsageReport(new Usage(50, 0, 0, 25)));
             r.onEvent(new AssistantEvent.TurnFinish("end_turn"));
@@ -100,7 +100,7 @@ class TextRendererTest {
     @Test
     void sentIncludesCacheTokens() {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        try (TextRenderer r = new TextRenderer(new PrintStream(buf, true, StandardCharsets.UTF_8))) {
+        try (TextRenderer r = new TextRenderer(new PrintStream(buf, true, StandardCharsets.UTF_8), Style.PLAIN)) {
             r.onEvent(new AssistantEvent.UsageReport(new Usage(10, 100, 1000, 5)));
             r.onEvent(new AssistantEvent.TurnFinish("end_turn"));
         }
@@ -111,7 +111,7 @@ class TextRendererTest {
     @Test
     void zeroUsageReportIsSuppressed() {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        try (TextRenderer r = new TextRenderer(new PrintStream(buf, true, StandardCharsets.UTF_8))) {
+        try (TextRenderer r = new TextRenderer(new PrintStream(buf, true, StandardCharsets.UTF_8), Style.PLAIN)) {
             r.onEvent(new AssistantEvent.UsageReport(Usage.EMPTY));
             r.onEvent(new AssistantEvent.TurnFinish("end_turn"));
         }
@@ -122,7 +122,7 @@ class TextRendererTest {
     @Test
     void textDeltaStillStreamsInline() {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        try (TextRenderer r = new TextRenderer(new PrintStream(buf, true, StandardCharsets.UTF_8))) {
+        try (TextRenderer r = new TextRenderer(new PrintStream(buf, true, StandardCharsets.UTF_8), Style.PLAIN)) {
             r.onEvent(new AssistantEvent.TextDelta("Hello, "));
             r.onEvent(new AssistantEvent.TextDelta("world!"));
             r.onEvent(new AssistantEvent.TurnFinish("end_turn"));

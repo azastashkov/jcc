@@ -32,6 +32,9 @@ public final class JccCommand implements Callable<Integer> {
     @Option(names = "--resume", description = "Resume a prior session by id, filename, 'latest', or path.")
     String resume;
 
+    @Option(names = "--no-color", description = "Disable ANSI colors and the in-place status line.")
+    boolean noColor;
+
     @Override
     public Integer call() {
         RuntimeEnvironment env;
@@ -43,6 +46,7 @@ public final class JccCommand implements Callable<Integer> {
             log.error("{}", e.getMessage());
             return 2;
         }
-        return new ReplSession(env, SlashCommandRegistry.defaults(), System.out).run();
+        Style style = noColor ? Style.PLAIN : Style.detect();
+        return new ReplSession(env, SlashCommandRegistry.defaults(), System.out, style).run();
     }
 }

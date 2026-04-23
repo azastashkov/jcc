@@ -133,6 +133,7 @@ class PromptSubcommandTest {
         cmd.outputFormat = format;
         cmd.maxTokens = 1024;
         cmd.permissionMode = "danger-full-access";
+        cmd.noColor = true;
         return cmd;
     }
 

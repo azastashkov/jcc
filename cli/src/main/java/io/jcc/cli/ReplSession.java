@@ -26,18 +26,23 @@ public final class ReplSession {
     private final RuntimeEnvironment env;
     private final SlashCommandRegistry slashRegistry;
     private final PrintStream out;
+    private final Style style;
     private Usage runningUsage = Usage.EMPTY;
 
     public ReplSession(RuntimeEnvironment env, SlashCommandRegistry registry, PrintStream out) {
+        this(env, registry, out, Style.detect());
+    }
+
+    public ReplSession(RuntimeEnvironment env, SlashCommandRegistry registry, PrintStream out, Style style) {
         this.env = env;
         this.slashRegistry = registry;
         this.out = out;
+        this.style = style;
     }
 
     public int run() {
         try (Terminal terminal = TerminalBuilder.builder()
             .system(true)
-            .dumb(true)
             .build()) {
 
             LineReader reader = LineReaderBuilder.builder()
@@ -49,8 +54,10 @@ public final class ReplSession {
                     .toList()))
                 .build();
 
-            out.println("jcc REPL — type /help for commands, /exit to quit.");
-            out.println("Session: " + env.session.sessionId() + "  model=" + env.model);
+            StatusBar statusBar = new StatusBar(terminal);
+
+            out.println(style.dim("jcc REPL — type /help for commands, /exit to quit."));
+            out.println(style.dim("Session: " + env.session.sessionId() + "  model=" + env.model));
             out.println();
 
             while (true) {
@@ -69,7 +76,7 @@ public final class ReplSession {
                         break;
                     }
                 } else {
-                    runPromptTurn(line);
+                    runPromptTurn(line, statusBar);
                 }
             }
             return 0;
@@ -94,25 +101,43 @@ public final class ReplSession {
         return result;
     }
 
-    private void runPromptTurn(String prompt) {
-        TextRenderer renderer = new TextRenderer(out);
+    private void runPromptTurn(String prompt, StatusBar statusBar) {
+        TextRenderer renderer = new TextRenderer(out, style);
         int historyBefore = env.conversation.history().size();
+        boolean[] seenStreamingThisSubTurn = {false};
         try {
+            statusBar.waiting();
             AssistantEventHandler handler = new AssistantEventHandler() {
                 @Override
                 public void onTextDelta(String text) {
+                    if (!seenStreamingThisSubTurn[0]) {
+                        statusBar.streaming();
+                        seenStreamingThisSubTurn[0] = true;
+                    }
                     renderer.onEvent(new AssistantEvent.TextDelta(text));
+                }
+
+                @Override
+                public void onThinking(String text) {
+                    if (!seenStreamingThisSubTurn[0]) {
+                        statusBar.streaming();
+                        seenStreamingThisSubTurn[0] = true;
+                    }
+                    renderer.onEvent(new AssistantEvent.Thinking(text));
                 }
 
                 @Override
                 public void onToolUseEnd(String id, String name, JsonNode input) {
                     renderer.onEvent(new AssistantEvent.ToolUseRequested(
                         id, name, input == null ? "{}" : input.toString()));
+                    statusBar.runningTool(name);
                 }
 
                 @Override
                 public void onToolResult(String id, String name, String output, boolean isError) {
                     renderer.onEvent(new AssistantEvent.ToolResult(id, name, output, isError));
+                    seenStreamingThisSubTurn[0] = false;
+                    statusBar.waiting();
                 }
 
                 @Override
@@ -131,6 +156,8 @@ public final class ReplSession {
         } catch (RuntimeException e) {
             out.println();
             out.println("Turn failed: " + e.getMessage());
+        } finally {
+            statusBar.clear();
         }
     }
 

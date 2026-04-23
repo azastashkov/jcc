@@ -7,13 +7,19 @@ import java.io.PrintStream;
 public final class TextRenderer implements StreamingRenderer {
 
     private final PrintStream out;
+    private final Style style;
     private boolean sawText;
     private Usage lastUsage = Usage.EMPTY;
     private long lastPrintedSent = -1;
     private long lastPrintedRecv = -1;
 
     public TextRenderer(PrintStream out) {
+        this(out, Style.detect());
+    }
+
+    public TextRenderer(PrintStream out, Style style) {
         this.out = out;
+        this.style = style;
     }
 
     @Override
@@ -28,13 +34,24 @@ public final class TextRenderer implements StreamingRenderer {
             }
             case AssistantEvent.ToolUseRequested use -> {
                 breakInlineText();
-                out.printf("● %s %s%n", use.name(), abbreviate(use.inputJson(), 200));
+                out.printf("%s %s %s%n",
+                    style.toolMarker("●"),
+                    style.toolName(use.name()),
+                    style.toolArgs(abbreviate(use.inputJson(), 200)));
                 out.flush();
             }
             case AssistantEvent.ToolResult result -> {
                 breakInlineText();
-                String prefix = result.isError() ? "  error →" : "  →";
-                out.printf("%s %s%n", prefix, abbreviate(firstLine(result.output()), 300));
+                String body = abbreviate(firstLine(result.output()), 300);
+                if (result.isError()) {
+                    out.printf("%s %s%n",
+                        style.toolError("  error →"),
+                        style.toolError(body));
+                } else {
+                    out.printf("%s %s%n",
+                        style.toolResult("  →"),
+                        style.toolResult(body));
+                }
                 out.flush();
             }
             case AssistantEvent.UsageReport report -> {
@@ -46,7 +63,7 @@ public final class TextRenderer implements StreamingRenderer {
                 lastPrintedSent = sent;
                 lastPrintedRecv = recv;
                 breakInlineText();
-                out.printf("  · sent=%d recv=%d%n", sent, recv);
+                out.printf("%s%n", style.progress(String.format("  · sent=%d recv=%d", sent, recv)));
                 out.flush();
             }
             case AssistantEvent.TurnFinish finish -> {
@@ -55,14 +72,14 @@ public final class TextRenderer implements StreamingRenderer {
                 }
                 String reason = finish.stopReason();
                 if (reason != null && !reason.isBlank() && !"end_turn".equals(reason)) {
-                    out.printf("%n[stop: %s]%n", reason);
+                    out.printf("%n%s%n", style.stopReason("[stop: " + reason + "]"));
                 }
-                out.printf(
-                    "%n[tokens in=%d out=%d cache_read=%d cache_write=%d]%n",
+                out.printf("%n%s%n", style.tokenFooter(String.format(
+                    "[tokens in=%d out=%d cache_read=%d cache_write=%d]",
                     lastUsage.inputTokens(),
                     lastUsage.outputTokens(),
                     lastUsage.cacheReadInputTokens(),
-                    lastUsage.cacheCreationInputTokens());
+                    lastUsage.cacheCreationInputTokens())));
             }
         }
     }

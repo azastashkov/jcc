@@ -55,6 +55,9 @@ public final class PromptSubcommand implements Callable<Integer> {
         description = "Resume a prior session by id, filename, 'latest', or an explicit path.")
     String resume;
 
+    @Option(names = "--no-color", description = "Disable ANSI colors.")
+    boolean noColor;
+
     @Parameters(arity = "1", description = "The prompt text.")
     String prompt;
 
@@ -85,8 +88,9 @@ public final class PromptSubcommand implements Callable<Integer> {
     }
 
     int runPrompt(ProviderClient client, PrintStream out, SessionStore store) {
+        Style style = noColor ? Style.PLAIN : Style.detect();
         StreamingRenderer renderer = switch (outputFormat) {
-            case "text" -> new TextRenderer(out);
+            case "text" -> new TextRenderer(out, style);
             case "json" -> new JsonRenderer(out);
             default -> {
                 log.error("Unsupported --output-format: {}", outputFormat);
