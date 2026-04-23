@@ -173,42 +173,6 @@ up the model, permissions, and MCP servers automatically.
   - `OPENAI_BASE_URL` + `OPENAI_API_KEY` for an OpenAI-compatible endpoint
 - macOS / Linux primary targets; Windows builds but is not routinely exercised
 
-## Architecture
-
-Six Gradle modules, with dependencies flowing strictly downward:
-
-```
-core  ◄───  api  ◄───  runtime  ◄───  tools       ◄───  cli
-                                 ◄───  commands   ◄──┘
-```
-
-| Module     | Package root           | Purpose                                                                                                          |
-| ---------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `core`     | `io.jcc.core`          | Shared DTOs, sealed `ContentBlock` hierarchy, `Usage` record, `MessageRole`, `Result<T,E>`, Jackson-configured `ObjectMapper`, virtual-thread + scheduled executors |
-| `api`      | `io.jcc.api`           | `ProviderClient` interface plus `AnthropicProviderClient` (native `/v1/messages` SSE) and `OpenAiCompatProviderClient` (`/v1/chat/completions` translation). `SseLineParser`, `MessageRequest` / `StreamEvent` / `ContentBlockDelta` sealed hierarchies. |
-| `runtime`  | `io.jcc.runtime`       | Session JSONL persistence (256 KB rotation, 3 rotated files max), four-scope `ConfigLoader`, `PermissionPolicy` (5 modes), `ConversationRuntime` tool loop, `McpStdioClient` + `McpServerManager`, `SubagentExecutor` + `TaskRegistry`, `CompositeToolExecutor`, `FilteringToolExecutor` |
-| `tools`    | `io.jcc.tools`         | Eight built-ins (`BashTool`, `ReadFileTool`, `WriteFileTool`, `EditFileTool`, `GlobTool`, `GrepTool`, `WebFetchTool`, `WebSearchTool`), plus `AgentTool` for sub-agent delegation. `BuiltinToolRegistry` implements `ToolExecutor`. |
-| `commands` | `io.jcc.commands`      | `SlashCommand` interface + registry + handlers: `/help`, `/status`, `/cost`, `/clear`, `/compact`, `/config`, `/mcp`, `/skills`, `/subagent`, `/exit` |
-| `cli`      | `io.jcc.cli`           | Picocli `JccCommand` root + `PromptSubcommand`, JLine 3 `ReplSession`, `TextRenderer` / `JsonRenderer` behind `StreamingRenderer`, `RuntimeEnvironment` bootstrap, `Main` |
-
-**Concurrency.** Virtual threads (Project Loom) handle every blocking
-I/O path: HTTP requests, tool invocations, MCP subprocess stdout / stderr
-readers, sub-agent turns. A two-thread `ScheduledExecutorService` handles
-timeouts only. `ReentrantLock` is used around any blocking-I/O critical
-section (MCP stdin writes, session appends) to avoid Loom pinning.
-
-**Error handling.** Infrastructure failures raise unchecked exceptions
-(`ApiException`, `ProviderException`, `ConfigException`,
-`McpTransportException`, `SessionException`). Tool execution uses
-`Result<ToolOutput, ToolError>` because tool failures are a normal part
-of the agent loop and surface as `is_error: true` tool-result blocks
-rather than thrown.
-
-**JSON.** A single configured Jackson `ObjectMapper` (SNAKE_CASE naming,
-parameter-names + jdk8 + jsr310 modules, `FAIL_ON_UNKNOWN_PROPERTIES=false`).
-Polymorphic wire types use `@JsonTypeInfo(use=NAME, property="type")` +
-`@JsonSubTypes` on sealed interfaces with records per variant.
-
 ## Commands
 
 **CLI flags** (apply to both the root and the `prompt` subcommand):
