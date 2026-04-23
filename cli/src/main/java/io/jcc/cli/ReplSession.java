@@ -43,6 +43,7 @@ public final class ReplSession {
     public int run() {
         try (Terminal terminal = TerminalBuilder.builder()
             .system(true)
+            .dumb(true)
             .build()) {
 
             LineReader reader = LineReaderBuilder.builder()
@@ -53,8 +54,6 @@ public final class ReplSession {
                     .map(n -> "/" + n)
                     .toList()))
                 .build();
-
-            StatusBar statusBar = new StatusBar(terminal);
 
             out.println(style.dim("jcc REPL — type /help for commands, /exit to quit."));
             out.println(style.dim("Session: " + env.session.sessionId() + "  model=" + env.model));
@@ -76,7 +75,7 @@ public final class ReplSession {
                         break;
                     }
                 } else {
-                    runPromptTurn(line, statusBar);
+                    runPromptTurn(line);
                 }
             }
             return 0;
@@ -101,43 +100,25 @@ public final class ReplSession {
         return result;
     }
 
-    private void runPromptTurn(String prompt, StatusBar statusBar) {
+    private void runPromptTurn(String prompt) {
         TextRenderer renderer = new TextRenderer(out, style);
         int historyBefore = env.conversation.history().size();
-        boolean[] seenStreamingThisSubTurn = {false};
         try {
-            statusBar.waiting();
             AssistantEventHandler handler = new AssistantEventHandler() {
                 @Override
                 public void onTextDelta(String text) {
-                    if (!seenStreamingThisSubTurn[0]) {
-                        statusBar.streaming();
-                        seenStreamingThisSubTurn[0] = true;
-                    }
                     renderer.onEvent(new AssistantEvent.TextDelta(text));
-                }
-
-                @Override
-                public void onThinking(String text) {
-                    if (!seenStreamingThisSubTurn[0]) {
-                        statusBar.streaming();
-                        seenStreamingThisSubTurn[0] = true;
-                    }
-                    renderer.onEvent(new AssistantEvent.Thinking(text));
                 }
 
                 @Override
                 public void onToolUseEnd(String id, String name, JsonNode input) {
                     renderer.onEvent(new AssistantEvent.ToolUseRequested(
                         id, name, input == null ? "{}" : input.toString()));
-                    statusBar.runningTool(name);
                 }
 
                 @Override
                 public void onToolResult(String id, String name, String output, boolean isError) {
                     renderer.onEvent(new AssistantEvent.ToolResult(id, name, output, isError));
-                    seenStreamingThisSubTurn[0] = false;
-                    statusBar.waiting();
                 }
 
                 @Override
@@ -156,8 +137,6 @@ public final class ReplSession {
         } catch (RuntimeException e) {
             out.println();
             out.println("Turn failed: " + e.getMessage());
-        } finally {
-            statusBar.clear();
         }
     }
 
