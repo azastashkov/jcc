@@ -343,6 +343,50 @@ class OpenAiCompatProviderClientTest {
     }
 
     @Test
+    void requestsUsageInStreamingChunks() throws Exception {
+        MessageRequest req = MessageRequest.builder()
+            .model("qwen")
+            .maxTokens(50)
+            .messages(List.of(InputMessage.userText("hi")))
+            .build();
+
+        client().stream(req, event -> {});
+
+        JsonNode body = JsonMapper.shared().readTree(receivedBodies.get(0));
+        assertThat(body.path("stream").asBoolean()).isTrue();
+        assertThat(body.path("stream_options").path("include_usage").asBoolean())
+            .as("must opt in to streaming usage so token counts arrive at end-of-stream")
+            .isTrue();
+    }
+
+    @Test
+    void capturesBothPromptAndCompletionTokensFromUsage() {
+        responseBody = """
+            data: {"id":"chatcmpl-1","choices":[{"delta":{"role":"assistant","content":"Hi."},"index":0,"finish_reason":null}]}
+
+            data: {"id":"chatcmpl-1","choices":[{"delta":{},"index":0,"finish_reason":"stop"}],"usage":{"prompt_tokens":42,"completion_tokens":7,"total_tokens":49}}
+
+            data: [DONE]
+
+            """;
+
+        MessageRequest req = MessageRequest.builder()
+            .model("qwen")
+            .maxTokens(50)
+            .messages(List.of(InputMessage.userText("hi")))
+            .build();
+
+        List<StreamEvent> events = new ArrayList<>();
+        client().stream(req, events::add);
+
+        StreamEvent.MessageDeltaEvent md = (StreamEvent.MessageDeltaEvent) events.stream()
+            .filter(e -> e instanceof StreamEvent.MessageDeltaEvent)
+            .findFirst().orElseThrow();
+        assertThat(md.usage().inputTokens()).isEqualTo(42);
+        assertThat(md.usage().outputTokens()).isEqualTo(7);
+    }
+
+    @Test
     void mapsAssistantToolUseAndToolResultHistoryToOpenAiMessages() throws Exception {
         ObjectNode toolInput = JsonMapper.shared().createObjectNode();
         toolInput.put("path", "./README.md");

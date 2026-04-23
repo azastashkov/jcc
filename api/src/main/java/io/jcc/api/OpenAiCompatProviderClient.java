@@ -88,6 +88,9 @@ public final class OpenAiCompatProviderClient implements ProviderClient {
         root.put("model", req.model());
         root.put("max_tokens", req.maxTokens());
         root.put("stream", req.stream());
+        if (req.stream()) {
+            root.putObject("stream_options").put("include_usage", true);
+        }
         if (req.temperature() != null) root.put("temperature", req.temperature());
         if (req.topP() != null) root.put("top_p", req.topP());
         if (req.frequencyPenalty() != null) root.put("frequency_penalty", req.frequencyPenalty());
@@ -224,6 +227,7 @@ public final class OpenAiCompatProviderClient implements ProviderClient {
         private int nextContentIndex;
         private final Map<Integer, PendingToolCall> pendingToolCalls = new LinkedHashMap<>();
         private String finishReason;
+        private int inputTokens;
         private int outputTokens;
 
         private final StringBuilder pendingText = new StringBuilder();
@@ -315,8 +319,13 @@ public final class OpenAiCompatProviderClient implements ProviderClient {
             }
 
             JsonNode usage = chunk.path("usage");
-            if (usage.isObject() && usage.has("completion_tokens")) {
-                outputTokens = usage.get("completion_tokens").asInt();
+            if (usage.isObject()) {
+                if (usage.has("prompt_tokens")) {
+                    inputTokens = usage.get("prompt_tokens").asInt();
+                }
+                if (usage.has("completion_tokens")) {
+                    outputTokens = usage.get("completion_tokens").asInt();
+                }
             }
         }
 
@@ -444,10 +453,11 @@ public final class OpenAiCompatProviderClient implements ProviderClient {
                 : (finishReason == null ? "end_turn" : translateFinish(finishReason));
             handler.onEvent(new StreamEvent.MessageDeltaEvent(
                 new StreamEvent.MessageDelta(stop, null),
-                new Usage(0, 0, 0, outputTokens)));
+                new Usage(inputTokens, 0, 0, outputTokens)));
             handler.onEvent(StreamEvent.MessageStop.INSTANCE);
             messageStarted = false;
             finishReason = null;
+            inputTokens = 0;
             outputTokens = 0;
             nextContentIndex = 0;
             hermesMode = false;
