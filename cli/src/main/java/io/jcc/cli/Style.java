@@ -76,6 +76,7 @@ public final class Style {
     public String number(String s)     { return wrap(s, withBg(AttributedStyle.DEFAULT.foregroundRgb(0x6897BB))); }
     public String annotation(String s) { return wrap(s, withBg(AttributedStyle.DEFAULT.foregroundRgb(0xBBB529))); }
     public String operator(String s)   { return wrap(s, withBg(AttributedStyle.DEFAULT.foregroundRgb(0xA9B7C6))); }
+    public String variable(String s)   { return wrap(s, withBg(AttributedStyle.DEFAULT.foregroundRgb(0x9876AA))); }
 
     public String forToken(TokenType type, String text) {
         return switch (type) {
@@ -85,6 +86,7 @@ public final class Style {
             case NUMBER -> number(text);
             case ANNOTATION -> annotation(text);
             case OPERATOR -> operator(text);
+            case VARIABLE -> variable(text);
             case IDENTIFIER, OTHER ->
                 codeBackgroundRgb != null ? wrap(text, withBg(AttributedStyle.DEFAULT)) : text;
         };

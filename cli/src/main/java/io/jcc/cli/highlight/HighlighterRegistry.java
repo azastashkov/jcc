@@ -14,6 +14,11 @@ public final class HighlighterRegistry {
     public static HighlighterRegistry defaults() {
         HighlighterRegistry r = new HighlighterRegistry();
         r.register("java", new JavaHighlighter());
+        BashHighlighter bash = new BashHighlighter();
+        r.register("bash", bash);
+        r.register("sh", bash);
+        r.register("shell", bash);
+        r.register("json", new JsonHighlighter());
         return r;
     }
 

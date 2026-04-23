@@ -7,6 +7,8 @@ public enum TokenType {
     NUMBER,
     ANNOTATION,
     OPERATOR,
+    /** Variables, JSON property keys — anything that should be the JetBrains purple. */
+    VARIABLE,
     IDENTIFIER,
     OTHER
 }
