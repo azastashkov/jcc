@@ -106,9 +106,12 @@ public final class RuntimeEnvironment {
 
         BuiltinToolRegistry builtinsWithAgent = new BuiltinToolRegistry(
             BuiltinToolRegistry.withAgent(subagentExec));
-        ToolExecutor toolExecutor = mcp != null
+        ToolExecutor composedToolExecutor = mcp != null
             ? new CompositeToolExecutor(builtinsWithAgent, mcp)
             : builtinsWithAgent;
+        ToolExecutor toolExecutor = opts.noTools
+            ? new io.jcc.runtime.FilteringToolExecutor(composedToolExecutor, java.util.Set.of())
+            : composedToolExecutor;
 
         Session session = opts.resume != null
             ? sessionStore.load(opts.resume)
@@ -151,7 +154,7 @@ public final class RuntimeEnvironment {
         if (concurrency != null) concurrency.close();
     }
 
-    public record Options(String model, Integer maxTokens, String permissionMode, String resume) {}
+    public record Options(String model, Integer maxTokens, String permissionMode, String resume, boolean noTools) {}
 
     private static ProviderClient selectProvider() {
         String openAiBase = System.getenv("OPENAI_BASE_URL");

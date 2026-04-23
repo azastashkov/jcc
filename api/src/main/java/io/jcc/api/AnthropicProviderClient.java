@@ -66,7 +66,11 @@ public final class AnthropicProviderClient implements ProviderClient {
             HttpResponse<Void> response = httpClient.send(httpRequest, BodyHandlers.fromLineSubscriber(subscriber));
             int status = response.statusCode();
             if (status < 200 || status >= 300) {
-                throw new ProviderException("Anthropic returned HTTP " + status);
+                String errorBody = subscriber.capturedBody();
+                String msg = errorBody.isEmpty()
+                    ? "Anthropic returned HTTP " + status
+                    : "Anthropic returned HTTP " + status + ": " + errorBody;
+                throw new ProviderException(msg);
             }
             parser.close();
             if (subscriber.failure() != null) {
@@ -81,8 +85,10 @@ public final class AnthropicProviderClient implements ProviderClient {
     }
 
     private static final class LineSubscriber implements Flow.Subscriber<String> {
+        private static final int MAX_BODY_CAPTURE = 4096;
         private final SseLineParser parser;
         private final AtomicBoolean done = new AtomicBoolean();
+        private final StringBuilder bodyCapture = new StringBuilder();
         private volatile Throwable failure;
 
         LineSubscriber(SseLineParser parser) {
@@ -97,7 +103,16 @@ public final class AnthropicProviderClient implements ProviderClient {
         @Override
         public void onNext(String line) {
             if (done.get()) return;
+            int remaining = MAX_BODY_CAPTURE - bodyCapture.length();
+            if (remaining > 0) {
+                String slice = line.length() <= remaining ? line : line.substring(0, remaining);
+                bodyCapture.append(slice).append('\n');
+            }
             parser.pushLine(line);
+        }
+
+        String capturedBody() {
+            return bodyCapture.toString().trim();
         }
 
         @Override

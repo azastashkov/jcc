@@ -35,12 +35,17 @@ public final class JccCommand implements Callable<Integer> {
     @Option(names = "--no-color", description = "Disable ANSI colors and the in-place status line.")
     boolean noColor;
 
+    @Option(names = "--no-tools",
+        description = "Don't advertise tools to the model. Use with reasoning models that "
+            + "reject the OpenAI tools parameter (e.g. DeepSeek-R1 distills).")
+    boolean noTools;
+
     @Override
     public Integer call() {
         RuntimeEnvironment env;
         try {
             env = RuntimeEnvironment.bootstrap(
-                new RuntimeEnvironment.Options(model, maxTokens, permissionMode, resume),
+                new RuntimeEnvironment.Options(model, maxTokens, permissionMode, resume, noTools),
                 SessionStore.defaultStore());
         } catch (IllegalStateException e) {
             log.error("{}", e.getMessage());

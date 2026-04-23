@@ -58,6 +58,11 @@ public final class PromptSubcommand implements Callable<Integer> {
     @Option(names = "--no-color", description = "Disable ANSI colors.")
     boolean noColor;
 
+    @Option(names = "--no-tools",
+        description = "Don't advertise tools to the model. Use with reasoning models that "
+            + "reject the OpenAI tools parameter (e.g. DeepSeek-R1 distills).")
+    boolean noTools;
+
     @Parameters(arity = "1", description = "The prompt text.")
     String prompt;
 
@@ -134,8 +139,11 @@ public final class PromptSubcommand implements Callable<Integer> {
             ? store.load(resume)
             : store.createNew(workingDir.toString(), resolvedModel);
 
+        io.jcc.runtime.ToolExecutor effectiveTools = noTools
+            ? new io.jcc.runtime.FilteringToolExecutor(tools, java.util.Set.of())
+            : tools;
         ConversationRuntime conversation = new ConversationRuntime(
-            client, tools, permissions, PermissionPrompter.DENY_ALL, toolCtx,
+            client, effectiveTools, permissions, PermissionPrompter.DENY_ALL, toolCtx,
             resolvedModel, resolvedMaxTokens, null);
         session.messages().forEach(cm ->
             conversation.addHistory(new InputMessage(cm.role().wire(), cm.blocks())));

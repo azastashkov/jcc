@@ -69,7 +69,11 @@ public final class OpenAiCompatProviderClient implements ProviderClient {
             HttpResponse<Void> response = httpClient.send(req.build(), BodyHandlers.fromLineSubscriber(subscriber));
             int status = response.statusCode();
             if (status < 200 || status >= 300) {
-                throw new ProviderException("OpenAI-compat returned HTTP " + status);
+                String errorBody = subscriber.capturedBody();
+                String msg = errorBody.isEmpty()
+                    ? "OpenAI-compat returned HTTP " + status
+                    : "OpenAI-compat returned HTTP " + status + ": " + errorBody;
+                throw new ProviderException(msg);
             }
             translator.close();
             if (subscriber.failure() != null) {
@@ -523,8 +527,10 @@ public final class OpenAiCompatProviderClient implements ProviderClient {
     }
 
     private static final class LineSubscriber implements Flow.Subscriber<String> {
+        private static final int MAX_BODY_CAPTURE = 4096;
         private final OpenAiStreamTranslator translator;
         private final AtomicBoolean done = new AtomicBoolean();
+        private final StringBuilder bodyCapture = new StringBuilder();
         private volatile Throwable failure;
 
         LineSubscriber(OpenAiStreamTranslator translator) {
@@ -539,7 +545,19 @@ public final class OpenAiCompatProviderClient implements ProviderClient {
         @Override
         public void onNext(String item) {
             if (done.get()) return;
+            captureForErrors(item);
             translator.pushLine(item);
+        }
+
+        private void captureForErrors(String line) {
+            int remaining = MAX_BODY_CAPTURE - bodyCapture.length();
+            if (remaining <= 0) return;
+            String slice = line.length() <= remaining ? line : line.substring(0, remaining);
+            bodyCapture.append(slice).append('\n');
+        }
+
+        String capturedBody() {
+            return bodyCapture.toString().trim();
         }
 
         @Override
