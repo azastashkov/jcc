@@ -89,8 +89,16 @@ public final class PromptSubcommand implements Callable<Integer> {
 
     int runPrompt(ProviderClient client, PrintStream out, SessionStore store) {
         Style style = noColor ? Style.PLAIN : Style.detect();
+
+        Path workingDir = Path.of("").toAbsolutePath();
+        RuntimeConfig config = new ConfigLoader().load(workingDir);
+
+        String resolvedModel = ModelAliases.resolve(firstNonNull(model, config.model()));
+        int resolvedMaxTokens = firstNonNull(maxTokens, config.maxTokens(), 8192);
+        int contextWindow = RuntimeEnvironment.resolveContextWindow(resolvedModel, config);
+
         StreamingRenderer renderer = switch (outputFormat) {
-            case "text" -> new TextRenderer(out, style);
+            case "text" -> new TextRenderer(out, style).setContextWindow(contextWindow);
             case "json" -> new JsonRenderer(out);
             default -> {
                 log.error("Unsupported --output-format: {}", outputFormat);
@@ -100,12 +108,6 @@ public final class PromptSubcommand implements Callable<Integer> {
         if (renderer == null) {
             return 2;
         }
-
-        Path workingDir = Path.of("").toAbsolutePath();
-        RuntimeConfig config = new ConfigLoader().load(workingDir);
-
-        String resolvedModel = ModelAliases.resolve(firstNonNull(model, config.model()));
-        int resolvedMaxTokens = firstNonNull(maxTokens, config.maxTokens(), 8192);
 
         PermissionMode mode;
         try {

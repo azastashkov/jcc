@@ -124,7 +124,7 @@ public final class RuntimeEnvironment {
         b.config = config;
         b.model = resolvedModel;
         b.maxTokens = resolvedMaxTokens;
-        b.contextWindow = ModelContextWindows.get(resolvedModel).orElse(0);
+        b.contextWindow = resolveContextWindow(resolvedModel, config);
         b.permissionMode = mode;
         b.permissions = permissions;
         b.provider = provider;
@@ -166,6 +166,14 @@ public final class RuntimeEnvironment {
                     + "(or set OPENAI_BASE_URL + OPENAI_API_KEY for an OpenAI-compatible endpoint).");
         }
         return new AnthropicProviderClient(anthropic);
+    }
+
+    static int resolveContextWindow(String model, RuntimeConfig config) {
+        if (model != null) {
+            Integer fromConfig = config.modelContextWindows().get(model);
+            if (fromConfig != null && fromConfig > 0) return fromConfig;
+        }
+        return ModelContextWindows.get(model).orElse(0);
     }
 
     private static String firstNonBlank(String... values) {

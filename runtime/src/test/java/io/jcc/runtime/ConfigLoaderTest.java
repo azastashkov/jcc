@@ -65,6 +65,29 @@ class ConfigLoaderTest {
     }
 
     @Test
+    void modelContextWindowsMapIsLoaded(@TempDir Path dir) throws Exception {
+        Files.writeString(dir.resolve(".jcc.json"), """
+            {
+              "model_context_windows": {
+                "qwen3-coder:30b-a3b-fp16": 262144,
+                "claude-opus-4-7": 1000000
+              }
+            }
+            """);
+        RuntimeConfig cfg = new ConfigLoader().load(dir);
+        assertThat(cfg.modelContextWindows())
+            .containsEntry("qwen3-coder:30b-a3b-fp16", 262144)
+            .containsEntry("claude-opus-4-7", 1_000_000);
+    }
+
+    @Test
+    void modelContextWindowsDefaultsToEmptyWhenAbsent(@TempDir Path dir) throws Exception {
+        Files.writeString(dir.resolve(".jcc.json"), "{}");
+        RuntimeConfig cfg = new ConfigLoader().load(dir);
+        assertThat(cfg.modelContextWindows()).isEmpty();
+    }
+
+    @Test
     void malformedJsonSurfacesClearError(@TempDir Path dir) throws Exception {
         Files.writeString(dir.resolve(".jcc.json"), "{ not json");
         org.assertj.core.api.Assertions.assertThatThrownBy(() -> new ConfigLoader().load(dir))

@@ -12,19 +12,21 @@ public record RuntimeConfig(
     String model,
     Integer maxTokens,
     PermissionsConfig permissions,
-    Map<String, McpServerConfig> mcp
+    Map<String, McpServerConfig> mcp,
+    Map<String, Integer> modelContextWindows
 ) {
 
     public RuntimeConfig {
         permissions = permissions == null ? PermissionsConfig.empty() : permissions;
         mcp = mcp == null ? Map.of() : Map.copyOf(mcp);
+        modelContextWindows = modelContextWindows == null ? Map.of() : Map.copyOf(modelContextWindows);
     }
 
     public RuntimeConfig(String model, Integer maxTokens, PermissionsConfig permissions) {
-        this(model, maxTokens, permissions, Map.of());
+        this(model, maxTokens, permissions, Map.of(), Map.of());
     }
 
     public static RuntimeConfig empty() {
-        return new RuntimeConfig(null, null, PermissionsConfig.empty(), Map.of());
+        return new RuntimeConfig(null, null, PermissionsConfig.empty(), Map.of(), Map.of());
     }
 }
