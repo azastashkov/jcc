@@ -120,6 +120,61 @@ class TextRendererTest {
     }
 
     @Test
+    void contextPercentShownInSnapshotWhenContextWindowSet() {
+        ByteArrayOutputStream buf = new ByteArrayOutputStream();
+        try (TextRenderer r = new TextRenderer(new PrintStream(buf, true, StandardCharsets.UTF_8), Style.PLAIN)
+            .setContextWindow(100_000)) {
+            r.onEvent(new AssistantEvent.UsageReport(new Usage(15_000, 0, 0, 200)));
+            r.onEvent(new AssistantEvent.TurnFinish("end_turn"));
+        }
+        String out = buf.toString(StandardCharsets.UTF_8);
+        assertThat(out).contains("sent=15000 recv=200 ctx=15%");
+        assertThat(out).contains("ctx=15% (15K/100K)");
+    }
+
+    @Test
+    void contextPercentAbsentWhenContextWindowZero() {
+        ByteArrayOutputStream buf = new ByteArrayOutputStream();
+        try (TextRenderer r = new TextRenderer(new PrintStream(buf, true, StandardCharsets.UTF_8), Style.PLAIN)) {
+            r.onEvent(new AssistantEvent.UsageReport(new Usage(15_000, 0, 0, 200)));
+            r.onEvent(new AssistantEvent.TurnFinish("end_turn"));
+        }
+        String out = buf.toString(StandardCharsets.UTF_8);
+        assertThat(out).contains("sent=15000 recv=200");
+        assertThat(out).doesNotContain("ctx=");
+    }
+
+    @Test
+    void contextPercentUsesDeltaNotCumulativeAcrossSubTurns() {
+        ByteArrayOutputStream buf = new ByteArrayOutputStream();
+        try (TextRenderer r = new TextRenderer(new PrintStream(buf, true, StandardCharsets.UTF_8), Style.PLAIN)
+            .setContextWindow(100_000)) {
+            // Sub-turn 1: cumulative input=10000
+            r.onEvent(new AssistantEvent.UsageReport(new Usage(10_000, 0, 0, 100)));
+            // Sub-turn 2: cumulative input=25000 (i.e. this sub-turn sent 15000)
+            r.onEvent(new AssistantEvent.UsageReport(new Usage(25_000, 0, 0, 300)));
+            r.onEvent(new AssistantEvent.TurnFinish("end_turn"));
+        }
+        String out = buf.toString(StandardCharsets.UTF_8);
+        // First snapshot: 10K/100K = 10%
+        assertThat(out).contains("sent=10000 recv=100 ctx=10%");
+        // Second snapshot: latest sub-turn delta was 15K → 15%
+        assertThat(out).contains("sent=25000 recv=300 ctx=15%");
+        // Footer reflects latest sub-turn's 15K
+        assertThat(out).contains("ctx=15% (15K/100K)");
+    }
+
+    @Test
+    void abbreviateTokensFormatsKAndM() {
+        assertThat(TextRenderer.abbreviateTokens(42)).isEqualTo("42");
+        assertThat(TextRenderer.abbreviateTokens(1_000)).isEqualTo("1K");
+        assertThat(TextRenderer.abbreviateTokens(15_000)).isEqualTo("15K");
+        assertThat(TextRenderer.abbreviateTokens(15_500)).isEqualTo("15.5K");
+        assertThat(TextRenderer.abbreviateTokens(1_000_000)).isEqualTo("1M");
+        assertThat(TextRenderer.abbreviateTokens(1_500_000)).isEqualTo("1.5M");
+    }
+
+    @Test
     void textDeltaStillStreamsInline() {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         try (TextRenderer r = new TextRenderer(new PrintStream(buf, true, StandardCharsets.UTF_8), Style.PLAIN)) {

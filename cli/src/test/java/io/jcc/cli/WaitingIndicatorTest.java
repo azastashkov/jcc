@@ -150,6 +150,31 @@ class WaitingIndicatorTest {
     }
 
     @Test
+    void tickAppendsContextPercentWhenContextWindowSet() {
+        try (WaitingIndicator ind = new WaitingIndicator(out, Style.colored())) {
+            ind.setContextWindow(100_000);
+            ind.begin("Working");
+            ind.updateTokens(20_000, 500);
+            ind.tick();
+        }
+        String result = buf.toString(StandardCharsets.UTF_8);
+        assertThat(result).contains("sent=20000 recv=500");
+        assertThat(result).contains("ctx=20%");
+    }
+
+    @Test
+    void tickOmitsContextPercentWhenContextWindowZero() {
+        try (WaitingIndicator ind = new WaitingIndicator(out, Style.colored())) {
+            ind.begin("Working");
+            ind.updateTokens(20_000, 500);
+            ind.tick();
+        }
+        String result = buf.toString(StandardCharsets.UTF_8);
+        assertThat(result).contains("sent=20000 recv=500");
+        assertThat(result).doesNotContain("ctx=");
+    }
+
+    @Test
     void closeIsIdempotent() {
         WaitingIndicator ind = new WaitingIndicator(out, Style.colored());
         ind.begin("X");

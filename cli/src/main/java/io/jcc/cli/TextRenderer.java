@@ -14,6 +14,9 @@ public final class TextRenderer implements StreamingRenderer {
     private Usage lastUsage = Usage.EMPTY;
     private long lastPrintedSent = -1;
     private long lastPrintedRecv = -1;
+    private long prevSent;
+    private long lastSubTurnInput;
+    private int contextWindow;
 
     public TextRenderer(PrintStream out) {
         this(out, Style.detect(), HighlighterRegistry.defaults());
@@ -27,6 +30,11 @@ public final class TextRenderer implements StreamingRenderer {
         this.out = out;
         this.style = style;
         this.filter = new MarkdownTextFilter(out, style, highlighters);
+    }
+
+    public TextRenderer setContextWindow(int contextWindow) {
+        this.contextWindow = contextWindow;
+        return this;
     }
 
     @Override
@@ -66,13 +74,20 @@ public final class TextRenderer implements StreamingRenderer {
                 lastUsage = report.usage();
                 long sent = sentTokens(lastUsage);
                 long recv = lastUsage.outputTokens();
+                long delta = sent - prevSent;
+                prevSent = sent;
+                if (delta > 0) lastSubTurnInput = delta;
                 if (sent == 0 && recv == 0) break;
                 if (sent == lastPrintedSent && recv == lastPrintedRecv) break;
                 lastPrintedSent = sent;
                 lastPrintedRecv = recv;
                 filter.flush();
                 breakInlineText();
-                out.printf("%s%n", style.progress(String.format("  · sent=%d recv=%d", sent, recv)));
+                StringBuilder line = new StringBuilder();
+                line.append(String.format("  · sent=%d recv=%d", sent, recv));
+                int pct = contextPct();
+                if (pct >= 0) line.append(" ctx=").append(pct).append('%');
+                out.printf("%s%n", style.progress(line.toString()));
                 out.flush();
             }
             case AssistantEvent.TurnFinish finish -> {
@@ -84,12 +99,20 @@ public final class TextRenderer implements StreamingRenderer {
                 if (reason != null && !reason.isBlank() && !"end_turn".equals(reason)) {
                     out.printf("%n%s%n", style.stopReason("[stop: " + reason + "]"));
                 }
-                out.printf("%n%s%n", style.tokenFooter(String.format(
-                    "[tokens in=%d out=%d cache_read=%d cache_write=%d]",
+                StringBuilder footer = new StringBuilder();
+                footer.append(String.format(
+                    "[tokens in=%d out=%d cache_read=%d cache_write=%d",
                     lastUsage.inputTokens(),
                     lastUsage.outputTokens(),
                     lastUsage.cacheReadInputTokens(),
-                    lastUsage.cacheCreationInputTokens())));
+                    lastUsage.cacheCreationInputTokens()));
+                int pct = contextPct();
+                if (pct >= 0) {
+                    footer.append(String.format(" · ctx=%d%% (%s/%s)",
+                        pct, abbreviateTokens(lastSubTurnInput), abbreviateTokens(contextWindow)));
+                }
+                footer.append(']');
+                out.printf("%n%s%n", style.tokenFooter(footer.toString()));
             }
         }
     }
@@ -111,6 +134,25 @@ public final class TextRenderer implements StreamingRenderer {
         return (long) u.inputTokens()
             + u.cacheCreationInputTokens()
             + u.cacheReadInputTokens();
+    }
+
+    private int contextPct() {
+        if (contextWindow <= 0 || lastSubTurnInput <= 0) return -1;
+        return (int) Math.round(100.0 * lastSubTurnInput / contextWindow);
+    }
+
+    static String abbreviateTokens(long n) {
+        if (n >= 1_000_000) {
+            return n % 1_000_000 == 0
+                ? (n / 1_000_000) + "M"
+                : String.format(java.util.Locale.ROOT, "%.1fM", n / 1_000_000.0);
+        }
+        if (n >= 1_000) {
+            return n % 1_000 == 0
+                ? (n / 1_000) + "K"
+                : String.format(java.util.Locale.ROOT, "%.1fK", n / 1_000.0);
+        }
+        return String.valueOf(n);
     }
 
     private static String firstLine(String s) {

@@ -42,6 +42,9 @@ public final class WaitingIndicator implements AutoCloseable {
     private long phaseStartedAtMs;
     private long sentTokens;
     private long recvTokens;
+    private long prevSent;
+    private long lastSubTurnInput;
+    private int contextWindow;
     private int frameIndex;
     private boolean visible;
     private ScheduledFuture<?> scheduled;
@@ -76,9 +79,19 @@ public final class WaitingIndicator implements AutoCloseable {
 
     public void updateTokens(long sent, long recv) {
         synchronized (lock) {
+            long delta = sent - prevSent;
+            if (delta > 0) lastSubTurnInput = delta;
+            prevSent = sent;
             this.sentTokens = sent;
             this.recvTokens = recv;
         }
+    }
+
+    public WaitingIndicator setContextWindow(int contextWindow) {
+        synchronized (lock) {
+            this.contextWindow = contextWindow;
+        }
+        return this;
     }
 
     public void end() {
@@ -125,10 +138,20 @@ public final class WaitingIndicator implements AutoCloseable {
             String frame = FRAMES[frameIndex];
             frameIndex = (frameIndex + 1) % FRAMES.length;
             long elapsedSec = (System.currentTimeMillis() - phaseStartedAtMs) / 1000;
-            String body = (sentTokens == 0 && recvTokens == 0)
-                ? String.format("%s %s… (%ds)", frame, currentPhase, elapsedSec)
-                : String.format("%s %s… (%ds · sent=%d recv=%d)",
-                    frame, currentPhase, elapsedSec, sentTokens, recvTokens);
+            String body;
+            if (sentTokens == 0 && recvTokens == 0) {
+                body = String.format("%s %s… (%ds)", frame, currentPhase, elapsedSec);
+            } else {
+                StringBuilder sb = new StringBuilder();
+                sb.append(String.format("%s %s… (%ds · sent=%d recv=%d",
+                    frame, currentPhase, elapsedSec, sentTokens, recvTokens));
+                if (contextWindow > 0 && lastSubTurnInput > 0) {
+                    int pct = (int) Math.round(100.0 * lastSubTurnInput / contextWindow);
+                    sb.append(" · ctx=").append(pct).append('%');
+                }
+                sb.append(')');
+                body = sb.toString();
+            }
             out.print(style.progress(body));
             out.flush();
             visible = true;

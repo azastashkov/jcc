@@ -101,9 +101,10 @@ public final class ReplSession {
     }
 
     private void runPromptTurn(String prompt) {
-        TextRenderer renderer = new TextRenderer(out, style);
+        TextRenderer renderer = new TextRenderer(out, style).setContextWindow(env.contextWindow);
         int historyBefore = env.conversation.history().size();
         try (WaitingIndicator indicator = new WaitingIndicator(out, style)) {
+            indicator.setContextWindow(env.contextWindow);
             indicator.begin("Waiting for response");
             AssistantEventHandler handler = new AssistantEventHandler() {
                 @Override

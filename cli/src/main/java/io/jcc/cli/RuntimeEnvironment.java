@@ -33,6 +33,7 @@ public final class RuntimeEnvironment {
     public final RuntimeConfig config;
     public final String model;
     public final int maxTokens;
+    public final int contextWindow;
     public final PermissionMode permissionMode;
     public final PermissionPolicy permissions;
     public final ProviderClient provider;
@@ -49,6 +50,7 @@ public final class RuntimeEnvironment {
         this.config = b.config;
         this.model = b.model;
         this.maxTokens = b.maxTokens;
+        this.contextWindow = b.contextWindow;
         this.permissionMode = b.permissionMode;
         this.permissions = b.permissions;
         this.provider = b.provider;
@@ -122,6 +124,7 @@ public final class RuntimeEnvironment {
         b.config = config;
         b.model = resolvedModel;
         b.maxTokens = resolvedMaxTokens;
+        b.contextWindow = ModelContextWindows.get(resolvedModel).orElse(0);
         b.permissionMode = mode;
         b.permissions = permissions;
         b.provider = provider;
@@ -190,6 +193,7 @@ public final class RuntimeEnvironment {
         RuntimeConfig config;
         String model;
         int maxTokens;
+        int contextWindow;
         PermissionMode permissionMode;
         PermissionPolicy permissions;
         ProviderClient provider;
