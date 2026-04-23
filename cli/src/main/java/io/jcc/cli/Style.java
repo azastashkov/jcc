@@ -9,22 +9,29 @@ import java.util.function.Function;
 
 public final class Style {
 
-    public static final Style PLAIN = new Style(false, false);
+    public static final Style PLAIN = new Style(false, false, null);
 
     private final boolean color;
     private final boolean truecolor;
+    private final Integer codeBackgroundRgb;
 
-    private Style(boolean color, boolean truecolor) {
+    private Style(boolean color, boolean truecolor, Integer codeBackgroundRgb) {
         this.color = color;
         this.truecolor = truecolor;
+        this.codeBackgroundRgb = codeBackgroundRgb;
     }
 
     public static Style colored() {
-        return new Style(true, false);
+        return new Style(true, false, null);
     }
 
     public static Style truecolor() {
-        return new Style(true, true);
+        return new Style(true, true, null);
+    }
+
+    public Style withCodeBackground(int rgb) {
+        if (!color) return this;
+        return new Style(color, truecolor, rgb);
     }
 
     public static Style detect() {
@@ -63,12 +70,12 @@ public final class Style {
     public String bold(String s)       { return wrap(s, AttributedStyle.BOLD); }
 
     // JetBrains IDEA Darcula palette for code highlighting.
-    public String keyword(String s)    { return wrap(s, AttributedStyle.BOLD.foregroundRgb(0xCC7832)); }
-    public String stringLit(String s)  { return wrap(s, AttributedStyle.DEFAULT.foregroundRgb(0x6A8759)); }
-    public String comment(String s)    { return wrap(s, AttributedStyle.DEFAULT.foregroundRgb(0x808080).italic()); }
-    public String number(String s)     { return wrap(s, AttributedStyle.DEFAULT.foregroundRgb(0x6897BB)); }
-    public String annotation(String s) { return wrap(s, AttributedStyle.DEFAULT.foregroundRgb(0xBBB529)); }
-    public String operator(String s)   { return wrap(s, AttributedStyle.DEFAULT.foregroundRgb(0xA9B7C6)); }
+    public String keyword(String s)    { return wrap(s, withBg(AttributedStyle.BOLD.foregroundRgb(0xCC7832))); }
+    public String stringLit(String s)  { return wrap(s, withBg(AttributedStyle.DEFAULT.foregroundRgb(0x6A8759))); }
+    public String comment(String s)    { return wrap(s, withBg(AttributedStyle.DEFAULT.foregroundRgb(0x808080).italic())); }
+    public String number(String s)     { return wrap(s, withBg(AttributedStyle.DEFAULT.foregroundRgb(0x6897BB))); }
+    public String annotation(String s) { return wrap(s, withBg(AttributedStyle.DEFAULT.foregroundRgb(0xBBB529))); }
+    public String operator(String s)   { return wrap(s, withBg(AttributedStyle.DEFAULT.foregroundRgb(0xA9B7C6))); }
 
     public String forToken(TokenType type, String text) {
         return switch (type) {
@@ -78,8 +85,30 @@ public final class Style {
             case NUMBER -> number(text);
             case ANNOTATION -> annotation(text);
             case OPERATOR -> operator(text);
-            case IDENTIFIER, OTHER -> text;
+            case IDENTIFIER, OTHER ->
+                codeBackgroundRgb != null ? wrap(text, withBg(AttributedStyle.DEFAULT)) : text;
         };
+    }
+
+    /** Returns an escape that sets the code background and erases to end of line, then resets. */
+    public String codeBackgroundEraseEol() {
+        if (!color || codeBackgroundRgb == null) return "";
+        return setCodeBg() + "\033[K\033[0m";
+    }
+
+    private AttributedStyle withBg(AttributedStyle base) {
+        return codeBackgroundRgb != null ? base.backgroundRgb(codeBackgroundRgb) : base;
+    }
+
+    private String setCodeBg() {
+        int r = (codeBackgroundRgb >> 16) & 0xFF;
+        int g = (codeBackgroundRgb >> 8) & 0xFF;
+        int b = codeBackgroundRgb & 0xFF;
+        if (truecolor) {
+            return String.format("\033[48;2;%d;%d;%dm", r, g, b);
+        }
+        int gray = 232 + Math.min(23, Math.max(0, (r + g + b) / 30));
+        return "\033[48;5;" + gray + "m";
     }
 
     boolean isColor() { return color; }
