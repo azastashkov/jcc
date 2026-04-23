@@ -1,7 +1,51 @@
 # jcc
 
-Java 21 reimplementation of the `claw-code` CLI agent harness. Scoped to MVP + MCP + REPL + multi-provider.
-Implemented for educational purposes only.
+The jcc project is a Java reimplementation of the `claw-code` CLI agent harness, designed for educational purposes. It's a powerful interactive command-line interface that allows users to:
+
+## Core Functionality
+- Communicate with language models (Anthropic Claude or OpenAI-compatible LLMs like Ollama)
+- Execute local file system and shell operations through built-in tools
+- Manage conversations with session persistence and resumption
+- Work in both interactive REPL mode and one-shot prompt mode
+
+## Main Use Cases
+1. **Interactive Development Assistant**: Real-time code analysis, refactoring, and explanation
+2. **Local Automation**: File operations, shell command execution, system interaction
+3. **Educational Tool**: Understanding language model architectures, agent design patterns
+4. **Research**: Experimenting with different LLM providers and prompting strategies
+
+## Key Features
+- **Multi-model Support**: Works with both Anthropic (Claude) and OpenAI-compatible endpoints
+- **Comprehensive Tool System**: 8 built-in tools including file operations, shell commands, and web requests
+- **Advanced Permission System**: 5 security modes (read-only, workspace-write, etc.) with fine-grained control
+- **Session Management**: Resume previous conversations, persist history to JSONL files
+- **MCP Integration**: Connect with Model Context Protocol servers for extended functionality
+- **Sub-agent Support**: Delegate complex tasks to specialized agents
+
+## Architecture
+The project is modularized into six layers (from core to CLI):
+- **core**: Shared DTOs, records, usage tracking, virtual threads
+- **api**: Provider clients for Anthropic and OpenAI-compat, SSE parsing
+- **runtime**: Session handling, tool execution, permission policies
+- **tools**: Built-in tools (read, write, bash, grep, etc.) and AgentTool
+- **commands**: REPL slash commands (/help, /status, /cost, etc.)
+- **cli**: Main command entry point, REPL interface, JSON rendering
+
+## Available Tools
+- `read_file`, `write_file`, `edit_file` - File operations
+- `bash` - Shell command execution
+- `glob`, `grep` - File system and content search
+- `web_fetch` - HTTP(S) requests
+- `Agent` - Sub-agent delegation
+
+This is an educational implementation that demonstrates:
+- Language model agent architecture
+- Tool calling mechanisms with permission controls
+- Interactive CLI design with virtual threads and JSON handling
+- Model Context Protocol (MCP) integration
+- Session persistence and management
+
+It provides a comprehensive learning platform for understanding how AI agents interact with local environments and execute complex tasks through a modular, well-designed Java architecture.
 
 ## Quick Start
 
