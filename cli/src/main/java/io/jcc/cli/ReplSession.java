@@ -103,33 +103,50 @@ public final class ReplSession {
     private void runPromptTurn(String prompt) {
         TextRenderer renderer = new TextRenderer(out, style);
         int historyBefore = env.conversation.history().size();
-        try {
+        try (WaitingIndicator indicator = new WaitingIndicator(out, style)) {
+            indicator.begin("Waiting for response");
             AssistantEventHandler handler = new AssistantEventHandler() {
                 @Override
                 public void onTextDelta(String text) {
-                    renderer.onEvent(new AssistantEvent.TextDelta(text));
+                    indicator.end();
+                    indicator.run(() -> renderer.onEvent(new AssistantEvent.TextDelta(text)));
+                }
+
+                @Override
+                public void onThinking(String text) {
+                    indicator.begin("Thinking");
+                    indicator.run(() -> renderer.onEvent(new AssistantEvent.Thinking(text)));
                 }
 
                 @Override
                 public void onToolUseEnd(String id, String name, JsonNode input) {
-                    renderer.onEvent(new AssistantEvent.ToolUseRequested(
-                        id, name, input == null ? "{}" : input.toString()));
+                    indicator.end();
+                    indicator.run(() -> renderer.onEvent(new AssistantEvent.ToolUseRequested(
+                        id, name, input == null ? "{}" : input.toString())));
+                    indicator.begin(WaitingIndicator.toolPhase(name));
                 }
 
                 @Override
                 public void onToolResult(String id, String name, String output, boolean isError) {
-                    renderer.onEvent(new AssistantEvent.ToolResult(id, name, output, isError));
+                    indicator.run(() -> renderer.onEvent(new AssistantEvent.ToolResult(
+                        id, name, output, isError)));
+                    indicator.begin("Waiting for response");
                 }
 
                 @Override
                 public void onUsage(Usage usage) {
                     runningUsage = runningUsage.plus(usage);
-                    renderer.onEvent(new AssistantEvent.UsageReport(runningUsage));
+                    long sent = (long) runningUsage.inputTokens()
+                        + runningUsage.cacheCreationInputTokens()
+                        + runningUsage.cacheReadInputTokens();
+                    indicator.updateTokens(sent, runningUsage.outputTokens());
+                    indicator.run(() -> renderer.onEvent(new AssistantEvent.UsageReport(runningUsage)));
                 }
 
                 @Override
                 public void onTurnFinish(String stopReason, int turns) {
-                    renderer.onEvent(new AssistantEvent.TurnFinish(stopReason));
+                    indicator.end();
+                    indicator.run(() -> renderer.onEvent(new AssistantEvent.TurnFinish(stopReason)));
                 }
             };
             env.conversation.runTurn(prompt, handler);
