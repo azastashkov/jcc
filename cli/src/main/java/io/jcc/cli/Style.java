@@ -1,5 +1,6 @@
 package io.jcc.cli;
 
+import io.jcc.cli.highlight.TokenType;
 import org.jline.utils.AttributedString;
 import org.jline.utils.AttributedStyle;
 
@@ -41,6 +42,25 @@ public final class Style {
     public String tokenFooter(String s){ return wrap(s, AttributedStyle.DEFAULT.faint()); }
     public String dim(String s)        { return wrap(s, AttributedStyle.DEFAULT.faint()); }
     public String bold(String s)       { return wrap(s, AttributedStyle.BOLD); }
+
+    public String keyword(String s)    { return wrap(s, AttributedStyle.BOLD.foreground(AttributedStyle.MAGENTA)); }
+    public String stringLit(String s)  { return wrap(s, AttributedStyle.DEFAULT.foreground(AttributedStyle.GREEN)); }
+    public String comment(String s)    { return wrap(s, AttributedStyle.DEFAULT.faint()); }
+    public String number(String s)     { return wrap(s, AttributedStyle.DEFAULT.foreground(AttributedStyle.CYAN)); }
+    public String annotation(String s) { return wrap(s, AttributedStyle.DEFAULT.foreground(AttributedStyle.YELLOW)); }
+    public String operator(String s)   { return wrap(s, AttributedStyle.DEFAULT.faint()); }
+
+    public String forToken(TokenType type, String text) {
+        return switch (type) {
+            case KEYWORD -> keyword(text);
+            case STRING -> stringLit(text);
+            case COMMENT -> comment(text);
+            case NUMBER -> number(text);
+            case ANNOTATION -> annotation(text);
+            case OPERATOR -> operator(text);
+            case IDENTIFIER, OTHER -> text;
+        };
+    }
 
     boolean isColor() { return color; }
 

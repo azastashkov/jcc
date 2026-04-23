@@ -1,5 +1,6 @@
 package io.jcc.cli;
 
+import io.jcc.cli.highlight.HighlighterRegistry;
 import io.jcc.core.Usage;
 
 import java.io.PrintStream;
@@ -8,31 +9,37 @@ public final class TextRenderer implements StreamingRenderer {
 
     private final PrintStream out;
     private final Style style;
+    private final MarkdownTextFilter filter;
     private boolean sawText;
     private Usage lastUsage = Usage.EMPTY;
     private long lastPrintedSent = -1;
     private long lastPrintedRecv = -1;
 
     public TextRenderer(PrintStream out) {
-        this(out, Style.detect());
+        this(out, Style.detect(), HighlighterRegistry.defaults());
     }
 
     public TextRenderer(PrintStream out, Style style) {
+        this(out, style, HighlighterRegistry.defaults());
+    }
+
+    public TextRenderer(PrintStream out, Style style, HighlighterRegistry highlighters) {
         this.out = out;
         this.style = style;
+        this.filter = new MarkdownTextFilter(out, style, highlighters);
     }
 
     @Override
     public void onEvent(AssistantEvent event) {
         switch (event) {
             case AssistantEvent.TextDelta delta -> {
-                out.print(delta.text());
-                out.flush();
+                filter.appendText(delta.text());
                 sawText = true;
             }
             case AssistantEvent.Thinking ignored -> {
             }
             case AssistantEvent.ToolUseRequested use -> {
+                filter.flush();
                 breakInlineText();
                 out.printf("%s %s %s%n",
                     style.toolMarker("●"),
@@ -41,6 +48,7 @@ public final class TextRenderer implements StreamingRenderer {
                 out.flush();
             }
             case AssistantEvent.ToolResult result -> {
+                filter.flush();
                 breakInlineText();
                 String body = abbreviate(firstLine(result.output()), 300);
                 if (result.isError()) {
@@ -62,11 +70,13 @@ public final class TextRenderer implements StreamingRenderer {
                 if (sent == lastPrintedSent && recv == lastPrintedRecv) break;
                 lastPrintedSent = sent;
                 lastPrintedRecv = recv;
+                filter.flush();
                 breakInlineText();
                 out.printf("%s%n", style.progress(String.format("  · sent=%d recv=%d", sent, recv)));
                 out.flush();
             }
             case AssistantEvent.TurnFinish finish -> {
+                filter.flush();
                 if (sawText) {
                     out.println();
                 }
@@ -111,6 +121,7 @@ public final class TextRenderer implements StreamingRenderer {
 
     @Override
     public void close() {
+        filter.flush();
         out.flush();
     }
 }
